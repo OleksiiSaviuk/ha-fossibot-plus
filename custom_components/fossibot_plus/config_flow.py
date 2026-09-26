@@ -36,10 +36,15 @@ class FossibotConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 await api.async_login()
                 await api.async_get_devices()
-            except FossibotAuthError:
+            except FossibotAuthError as err:
+                _LOGGER.debug("FOSSiBOT auth rejected: %s", err)
                 errors["base"] = "invalid_auth"
-            except FossibotConnectionError:
+            except FossibotConnectionError as err:
+                _LOGGER.debug("FOSSiBOT connection failed: %s", err)
                 errors["base"] = "cannot_connect"
+            except Exception:  # noqa: BLE001 - surface anything unexpected, don't crash the flow
+                _LOGGER.exception("Unexpected error validating FOSSiBOT credentials")
+                errors["base"] = "unknown"
             else:
                 await self.async_set_unique_id(user_input[CONF_EMAIL].lower())
                 self._abort_if_unique_id_configured()

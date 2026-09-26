@@ -83,13 +83,24 @@ class FossibotApiClient:
         headers = {**_COMMON_HEADERS, "Content-Type": "application/json"}
         payload = {"username": self.email, "password": self.password}
         try:
-            async with self.session.post(LOGIN_ENDPOINT, json=payload, headers=headers) as resp:
-                data = await resp.json(content_type=None)
-        except aiohttp.ClientError as err:
-            raise FossibotConnectionError(str(err)) from err
+            async with self.session.post(
+                LOGIN_ENDPOINT, json=payload, headers=headers
+            ) as resp:
+                text = await resp.text()
+        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+            _LOGGER.debug("FOSSiBOT login request failed: %s", err)
+            raise FossibotConnectionError(f"request to {LOGIN_ENDPOINT} failed: {err}") from err
+
+        _LOGGER.debug("FOSSiBOT login response: status=%s body=%s", resp.status, text)
+        try:
+            data = json.loads(text)
+        except ValueError as err:
+            raise FossibotConnectionError(
+                f"non-JSON response (HTTP {resp.status}): {text[:200]!r}"
+            ) from err
 
         if data.get("code") != 200 or not data.get("token"):
-            raise FossibotAuthError(data.get("msg", "login failed"))
+            raise FossibotAuthError(data.get("msg", f"login failed (HTTP {resp.status})"))
 
         self.token = data["token"]
         return self.token
@@ -109,8 +120,17 @@ class FossibotApiClient:
                     # so just re-login once and retry.
                     await self.async_login()
                     return await self.async_get_devices(_retried=True)
-                data = await resp.json(content_type=None)
-        except aiohttp.ClientError as err:
+                text = await resp.text()
+        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+            _LOGGER.debug("FOSSiBOT device-list request failed: %s", err)
+            raise FossibotConnectionError(
+                f"request to {DEVICE_LIST_ENDPOINT} failed: {err}"
+            ) from err
+
+        _LOGGER.debug("FOSSiBOT device-list response: status=%s body=%s", resp.status, text)
+        try:
+            data = json.loads(text)
+        except ValueError as err:
             raise FossibotConnectionError(str(err)) from err
 
         if data.get("code") != 200:

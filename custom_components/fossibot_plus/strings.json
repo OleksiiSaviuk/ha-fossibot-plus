@@ -10,7 +10,8 @@
     },
     "error": {
       "invalid_auth": "Invalid email or password",
-      "cannot_connect": "Could not reach the FOSSiBOT cloud"
+      "cannot_connect": "Could not reach the FOSSiBOT cloud",
+      "unknown": "Unexpected error - check the Home Assistant log"
     },
     "abort": {
       "already_configured": "This account is already configured"
@@ -18,19 +19,41 @@
   },
   "entity": {
     "sensor": {
-      "input_power": { "name": "Input power" },
-      "temp_inverter": { "name": "Inverter temperature" },
-      "temp_battery": { "name": "Battery temperature" },
-      "ac_frequency": { "name": "AC frequency" },
-      "battery_pack_value_low": { "name": "Battery pack value (low word, unconfirmed)" },
-      "battery_pack_value_high": { "name": "Battery pack value (high word, unconfirmed)" },
-      "dc_output_mode": { "name": "DC output mode" },
-      "usb_output_mode": { "name": "USB output mode" },
-      "input_voltage_or_current_raw": { "name": "Input voltage/current (raw, unconfirmed)" }
+      "input_power": {
+        "name": "Input power"
+      },
+      "temp_inverter": {
+        "name": "Inverter temperature"
+      },
+      "temp_battery": {
+        "name": "Battery temperature"
+      },
+      "ac_frequency": {
+        "name": "AC frequency"
+      },
+      "battery_pack_value_low": {
+        "name": "Battery pack value (low word, unconfirmed)"
+      },
+      "battery_pack_value_high": {
+        "name": "Battery pack value (high word, unconfirmed)"
+      },
+      "dc_output_mode": {
+        "name": "DC output mode"
+      },
+      "usb_output_mode": {
+        "name": "USB output mode"
+      },
+      "input_voltage_or_current_raw": {
+        "name": "Input voltage/current (raw, unconfirmed)"
+      }
     },
     "binary_sensor": {
-      "main_power": { "name": "Main power" },
-      "ac_output": { "name": "AC output" }
+      "main_power": {
+        "name": "Main power"
+      },
+      "ac_output": {
+        "name": "AC output"
+      }
     }
   }
 }
