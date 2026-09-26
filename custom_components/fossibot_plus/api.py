@@ -245,8 +245,12 @@ class FossibotWebSocket:
     def _handle_frame(self, raw: str) -> None:
         try:
             envelope = json.loads(raw)
-            metrics = parse_payload(envelope["data"])
+            hex_data = envelope["data"]
+            metrics = parse_payload(hex_data)
         except (ValueError, KeyError, IndexError) as err:
             _LOGGER.debug("Ignoring unparsable frame from %s: %s", self._sn_code, err)
             return
+        _LOGGER.debug(
+            "FOSSiBOT %s frame: raw=%s decoded=%s", self._sn_code, hex_data, metrics
+        )
         self._on_data(metrics)
