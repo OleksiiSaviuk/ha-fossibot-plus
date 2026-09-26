@@ -2,10 +2,21 @@
 
 DOMAIN = "fossibot_plus"
 
-BASE_URL = "https://app.fossibot.hk"
+# Confirmed via a Charles capture of the real app traffic: the REST API is
+# plain HTTP on port 80, NOT HTTPS as the source spec claimed. (Remote
+# Address app.fossibot.hk:80, SSL: -, HTTP/1.1.) This is very likely why
+# "cannot_connect" happened - aiohttp was attempting a TLS handshake
+# against a plain-HTTP endpoint.
+BASE_URL = "http://app.fossibot.hk"
 LOGIN_ENDPOINT = f"{BASE_URL}/prod-api/app/user/login"
 DEVICE_LIST_ENDPOINT = f"{BASE_URL}/prod-api/app/user_device/list"
-WS_URL = "wss://app.fossibot.hk/ws"
+# INFERRED BY ANALOGY, not yet directly confirmed: since the REST API
+# turned out to be plain HTTP rather than HTTPS, the WebSocket is almost
+# certainly plain "ws://" too (same server, same port 80 setup). If this
+# still fails to connect, capture the WS upgrade request itself in Charles
+# (it shows up as a normal HTTP GET with "Upgrade: websocket" headers) and
+# confirm scheme/host/port from there.
+WS_URL = "ws://app.fossibot.hk/ws"
 
 HEARTBEAT_INTERVAL = 5  # seconds - server drops idle connections after ~15s
 RECONNECT_DELAY = 5     # seconds before retrying a dropped websocket
