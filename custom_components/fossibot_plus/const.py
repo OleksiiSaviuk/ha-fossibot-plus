@@ -1,6 +1,6 @@
 """Constants for the FOSSiBOT integration."""
 
-DOMAIN = "fossibot"
+DOMAIN = "fossibot_plus"
 
 BASE_URL = "https://app.fossibot.hk"
 LOGIN_ENDPOINT = f"{BASE_URL}/prod-api/app/user/login"

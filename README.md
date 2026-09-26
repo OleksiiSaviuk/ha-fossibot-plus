@@ -4,9 +4,43 @@ Custom component для хмарного API `app.fossibot.hk` (застосун
 Реалізовано REST-логін, автовиявлення пристроїв та WebSocket-телеметрію
 (sensor + binary_sensor). Керування (switch) — наступний етап.
 
-## Встановлення
+Репозиторій: <https://github.com/zelin-sky/ha-fossibot-plus>
+Домен інтеграції: `fossibot_plus` (навмисно з суфіксом `_plus`, щоб не
+перетинатись з іншими Fossibot-інтеграціями в HACS/HA).
 
-1. Скопіюйте `custom_components/fossibot/` у `<config>/custom_components/`.
+## Встановлення через HACS
+
+Репозиторій вже має структуру, потрібну HACS (`hacs.json` у корені,
+`custom_components/fossibot_plus/` з `manifest.json`, що містить `domain`,
+`name`, `version`, `documentation`, `issue_tracker`, `codeowners`).
+
+1. Створіть публічний репозиторій `zelin-sky/ha-fossibot-plus` на GitHub
+   і запуште туди вміст цього архіву як є (корінь репозиторію = корінь
+   архіву: `README.md`, `hacs.json`, `custom_components/`).
+2. `manifest.json` уже посилається на
+   `https://github.com/zelin-sky/ha-fossibot-plus` — окремо нічого
+   змінювати не треба, якщо назва репозиторію саме така.
+3. (Рекомендовано, не обов'язково) Опублікуйте GitHub Release з тегом,
+   що збігається з `version` у `manifest.json` (наприклад `v0.1.0`) —
+   тоді HACS показуватиме історію версій; без релізів HACS просто бере
+   файли з дефолтної гілки.
+4. На репозиторії GitHub задайте короткий опис (Description) — HACS
+   показує його в UI — і додайте хоча б один topic.
+5. У Home Assistant: HACS → три крапки праворуч зверху → **Custom
+   repositories** → вставте `https://github.com/zelin-sky/ha-fossibot-plus`,
+   категорія **Integration**.
+6. Знайдіть "FOSSiBOT Power Station" у списку HACS → Download.
+7. Перезапустіть Home Assistant, далі — як у розділі нижче (Налаштування
+   → Пристрої та служби → Додати інтеграцію → FOSSiBOT).
+
+Без власного репозиторію на GitHub HACS працювати не буде — це головна
+умова: HACS тягне файли з git-репозиторію, а не приймає ZIP напряму (крім
+разового ручного встановлення нижче).
+
+## Встановлення вручну (без HACS)
+
+1. Скопіюйте `custom_components/fossibot_plus/` у
+   `<config>/custom_components/`.
 2. Перезапустіть Home Assistant.
 3. Налаштування → Пристрої та служби → Додати інтеграцію → FOSSiBOT.
 4. Введіть email/пароль від застосунку Fossibot+.
@@ -46,7 +80,10 @@ Custom component для хмарного API `app.fossibot.hk` (застосун
 9. **CRC16 у хвості кадру** парситься (відсікається), але не перевіряється —
    алгоритм контрольної суми в документі не наведено; позначено як TODO
    в коментарях `api.py`.
-10. Стан `2700` (головне живлення) та `2b00` (реле AC) — справжні
+10. Додано `hacs.json` у корені репозиторію та ключ `issue_tracker` у
+    `manifest.json` — обидва обов'язкові для HACS (`domain`, `documentation`,
+    `issue_tracker`, `codeowners`, `name`, `version` — усі присутні).
+11. Стан `2700` (головне живлення) та `2b00` (реле AC) — справжні
     булеві прапорці (0/1), винесені в `binary_sensor`. Стани `2c00`/`2d00`
     (DC/USB) у прикладі мають значення `2`, тобто це не проста булева
     величина, а маска/режим — залишено як числовий `sensor`, а не
