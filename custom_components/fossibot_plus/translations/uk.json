@@ -1,0 +1,36 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "email": "Електронна пошта",
+          "password": "Пароль"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Невірна пошта або пароль",
+      "cannot_connect": "Не вдалося з'єднатися з хмарою FOSSiBOT"
+    },
+    "abort": {
+      "already_configured": "Цей акаунт уже налаштовано"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "input_power": { "name": "Вхідна потужність" },
+      "temp_inverter": { "name": "Температура інвертора" },
+      "temp_battery": { "name": "Температура акумулятора" },
+      "ac_frequency": { "name": "Частота мережі" },
+      "battery_pack_value_low": { "name": "Значення батареї (молодше слово, непідтверджено)" },
+      "battery_pack_value_high": { "name": "Значення батареї (старше слово, непідтверджено)" },
+      "dc_output_mode": { "name": "Режим DC виходу" },
+      "usb_output_mode": { "name": "Режим USB виходу" },
+      "input_voltage_or_current_raw": { "name": "Вхідна напруга/струм (сире значення, непідтверджено)" }
+    },
+    "binary_sensor": {
+      "main_power": { "name": "Головне живлення" },
+      "ac_output": { "name": "AC вихід" }
+    }
+  }
+}

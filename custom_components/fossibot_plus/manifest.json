@@ -1,0 +1,11 @@
+{
+  "domain": "fossibot",
+  "name": "FOSSiBOT Power Station",
+  "codeowners": ["@zelinskyi"],
+  "config_flow": true,
+  "documentation": "https://github.com/zelinskyi/ha-fossibot",
+  "iot_class": "cloud_push",
+  "integration_type": "hub",
+  "requirements": [],
+  "version": "0.1.0"
+}
