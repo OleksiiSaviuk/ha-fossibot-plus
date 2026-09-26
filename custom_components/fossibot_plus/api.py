@@ -18,7 +18,10 @@ import aiohttp
 from .const import (
     DEVICE_LIST_ENDPOINT,
     HEARTBEAT_INTERVAL,
+    LOGIN_DUPLICATE_SUBMIT_MARKER,
     LOGIN_ENDPOINT,
+    LOGIN_MAX_RETRIES,
+    LOGIN_RETRY_DELAY,
     RECONNECT_DELAY,
     WS_URL,
 )
@@ -82,28 +85,51 @@ class FossibotApiClient:
     async def async_login(self) -> str:
         headers = {**_COMMON_HEADERS, "Content-Type": "application/json"}
         payload = {"username": self.email, "password": self.password}
-        try:
-            async with self.session.post(
-                LOGIN_ENDPOINT, json=payload, headers=headers
-            ) as resp:
-                text = await resp.text()
-        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-            _LOGGER.debug("FOSSiBOT login request failed: %s", err)
-            raise FossibotConnectionError(f"request to {LOGIN_ENDPOINT} failed: {err}") from err
 
-        _LOGGER.debug("FOSSiBOT login response: status=%s body=%s", resp.status, text)
-        try:
-            data = json.loads(text)
-        except ValueError as err:
-            raise FossibotConnectionError(
-                f"non-JSON response (HTTP {resp.status}): {text[:200]!r}"
-            ) from err
+        for attempt in range(LOGIN_MAX_RETRIES + 1):
+            try:
+                async with self.session.post(
+                    LOGIN_ENDPOINT, json=payload, headers=headers
+                ) as resp:
+                    text = await resp.text()
+            except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+                _LOGGER.debug("FOSSiBOT login request failed: %s", err)
+                raise FossibotConnectionError(
+                    f"request to {LOGIN_ENDPOINT} failed: {err}"
+                ) from err
 
-        if data.get("code") != 200 or not data.get("token"):
-            raise FossibotAuthError(data.get("msg", f"login failed (HTTP {resp.status})"))
+            _LOGGER.debug("FOSSiBOT login response: status=%s body=%s", resp.status, text)
+            try:
+                data = json.loads(text)
+            except ValueError as err:
+                raise FossibotConnectionError(
+                    f"non-JSON response (HTTP {resp.status}): {text[:200]!r}"
+                ) from err
 
-        self.token = data["token"]
-        return self.token
+            if data.get("code") == 200 and data.get("token"):
+                self.token = data["token"]
+                return self.token
+
+            msg = data.get("msg", f"login failed (HTTP {resp.status})")
+            if LOGIN_DUPLICATE_SUBMIT_MARKER in msg and attempt < LOGIN_MAX_RETRIES:
+                # The backend's anti-duplicate-submission guard rejected an
+                # identical login sent too soon after a previous one (e.g.
+                # the config flow's own validation login). The credentials
+                # are fine - just wait it out and retry.
+                _LOGGER.debug(
+                    "FOSSiBOT login hit anti-duplicate guard (attempt %s/%s), "
+                    "retrying in %ss: %s",
+                    attempt + 1,
+                    LOGIN_MAX_RETRIES,
+                    LOGIN_RETRY_DELAY,
+                    msg,
+                )
+                await asyncio.sleep(LOGIN_RETRY_DELAY)
+                continue
+
+            raise FossibotAuthError(msg)
+
+        raise FossibotAuthError("login failed after retries")
 
     async def async_get_devices(self, *, _retried: bool = False) -> list[dict]:
         if not self.token:

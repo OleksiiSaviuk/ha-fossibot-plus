@@ -21,6 +21,17 @@ WS_URL = "ws://app.fossibot.hk/ws"
 HEARTBEAT_INTERVAL = 5  # seconds - server drops idle connections after ~15s
 RECONNECT_DELAY = 5     # seconds before retrying a dropped websocket
 
+# The backend has a RuoYi-style anti-duplicate-submission guard: an
+# identical login body sent again within a few seconds of a previous one
+# gets rejected with msg "不允许重复提交，请稍候再试" even though the
+# credentials are correct. This happens in practice because the config
+# flow does one login to validate credentials, and async_setup_entry does
+# a second one moments later with a fresh client. Retry instead of
+# failing outright when this specific message is seen.
+LOGIN_DUPLICATE_SUBMIT_MARKER = "重复提交"
+LOGIN_RETRY_DELAY = 6  # seconds - comfortably past the guard's window
+LOGIN_MAX_RETRIES = 2
+
 CONF_EMAIL = "email"
 CONF_PASSWORD = "password"
 
