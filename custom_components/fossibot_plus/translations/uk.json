@@ -19,32 +19,35 @@
   },
   "entity": {
     "sensor": {
-      "input_power": {
-        "name": "Вхідна потужність"
+      "battery_soc": {
+        "name": "Заряд батареї"
       },
-      "temp_inverter": {
-        "name": "Температура інвертора"
+      "temperature": {
+        "name": "Температура"
       },
-      "temp_battery": {
-        "name": "Температура акумулятора"
+      "remaining_minutes": {
+        "name": "Залишок часу"
       },
       "ac_frequency": {
         "name": "Частота мережі"
       },
-      "battery_pack_value_low": {
-        "name": "Значення батареї (молодше слово, непідтверджено)"
+      "unknown_1400_raw": {
+        "name": "Невідоме значення 0x1400 (сире, непідтверджено)"
       },
-      "battery_pack_value_high": {
-        "name": "Значення батареї (старше слово, непідтверджено)"
+      "unknown_2300_raw": {
+        "name": "Невідоме значення 0x2300 (сире, непідтверджено)"
       },
-      "dc_output_mode": {
-        "name": "Режим DC виходу"
+      "dc_output_raw": {
+        "name": "Тег DC-виходу (сире, ймовірно статичне)"
       },
-      "usb_output_mode": {
-        "name": "Режим USB виходу"
+      "usb_output_raw": {
+        "name": "Тег USB-виходу (сире, ймовірно статичне)"
       },
       "input_voltage_or_current_raw": {
-        "name": "Вхідна напруга/струм (сире значення, непідтверджено)"
+        "name": "Вхідна напруга/струм (сире, ймовірно статичне)"
+      },
+      "battery_pack_raw": {
+        "name": "Значення батареї (сире, непідтверджено)"
       }
     },
     "binary_sensor": {

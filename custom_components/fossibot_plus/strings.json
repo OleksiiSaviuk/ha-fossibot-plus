@@ -19,32 +19,35 @@
   },
   "entity": {
     "sensor": {
-      "input_power": {
-        "name": "Input power"
+      "battery_soc": {
+        "name": "Battery"
       },
-      "temp_inverter": {
-        "name": "Inverter temperature"
+      "temperature": {
+        "name": "Temperature"
       },
-      "temp_battery": {
-        "name": "Battery temperature"
+      "remaining_minutes": {
+        "name": "Time remaining"
       },
       "ac_frequency": {
         "name": "AC frequency"
       },
-      "battery_pack_value_low": {
-        "name": "Battery pack value (low word, unconfirmed)"
+      "unknown_1400_raw": {
+        "name": "Unknown value 0x1400 (raw, unconfirmed)"
       },
-      "battery_pack_value_high": {
-        "name": "Battery pack value (high word, unconfirmed)"
+      "unknown_2300_raw": {
+        "name": "Unknown value 0x2300 (raw, unconfirmed)"
       },
-      "dc_output_mode": {
-        "name": "DC output mode"
+      "dc_output_raw": {
+        "name": "DC output tag (raw, likely static)"
       },
-      "usb_output_mode": {
-        "name": "USB output mode"
+      "usb_output_raw": {
+        "name": "USB output tag (raw, likely static)"
       },
       "input_voltage_or_current_raw": {
-        "name": "Input voltage/current (raw, unconfirmed)"
+        "name": "Input voltage/current (raw, likely static)"
+      },
+      "battery_pack_raw": {
+        "name": "Battery pack value (raw, unconfirmed)"
       }
     },
     "binary_sensor": {
