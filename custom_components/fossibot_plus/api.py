@@ -16,6 +16,8 @@ from typing import Callable
 import aiohttp
 
 from .const import (
+    CONTROL_ENDPOINT,
+    CTRL_COMMAND_PREFIX,
     DEVICE_LIST_ENDPOINT,
     FRAME_SILENCE_TIMEOUT,
     HEARTBEAT_INTERVAL,
@@ -57,10 +59,8 @@ def parse_payload(hex_str: str) -> dict[str, int]:
 
     Layout: 6-byte header, then repeating 6-byte
     [2-byte tag][4-byte little-endian value] blocks, then a 2-byte tail.
-    Most tags are a single uint32 counter/flag; a few (see const.py,
-    e.g. TAG_BATTERY_PACK) actually pack two 16-bit sub-values into that
-    same 4-byte slot - callers that need those must split the raw value
-    themselves (low word = value & 0xFFFF, high word = value >> 16).
+    Each tag is a plain uint32 counter/flag/reading - see const.py for what
+    each one is currently believed to mean and how confident that is.
     """
     raw = bytes.fromhex(hex_str)
     body = raw[HEADER_LEN:-TAIL_LEN]
@@ -72,6 +72,31 @@ def parse_payload(hex_str: str) -> dict[str, int]:
         value = struct.unpack("<I", block[2:6])[0]
         metrics[tag] = value
     return metrics
+
+
+def _crc16_modbus(data: bytes) -> int:
+    """CRC16/MODBUS: poly 0xA001 (reflected 0x8005), init 0xFFFF."""
+    crc = 0xFFFF
+    for b in data:
+        crc ^= b
+        for _ in range(8):
+            if crc & 1:
+                crc = (crc >> 1) ^ 0xA001
+            else:
+                crc >>= 1
+    return crc
+
+
+def build_control_command(tag_hex: str, value: int) -> str:
+    """Build the FOSSiBOT control command hex string for a given tag/value.
+
+    Reverse-engineered from six captured (tag, value) -> cmd pairs (AC/DC/
+    USB, each on and off), all of which this formula reproduces byte-for-
+    byte. See const.py's CTRL_COMMAND_PREFIX for the format breakdown.
+    """
+    payload = bytes.fromhex(tag_hex) + value.to_bytes(4, "little")
+    crc = _crc16_modbus(payload)
+    return CTRL_COMMAND_PREFIX + payload.hex() + crc.to_bytes(2, "big").hex()
 
 
 class FossibotApiClient:
@@ -163,6 +188,59 @@ class FossibotApiClient:
         if data.get("code") != 200:
             raise FossibotConnectionError(data.get("msg", "device list failed"))
         return data.get("rows", [])
+
+    async def async_send_control(
+        self, sn_code: str, tag_hex: str, value: int, *, _retried: bool = False
+    ) -> None:
+        """Send a control command that writes `value` to `tag_hex` on `sn_code`.
+
+        Captured via Charles for AC (tag 2700), DC (2800), and USB (2900),
+        each on (1) and off (0) - see build_control_command() for the byte
+        format this reproduces exactly. Untested for any other tag/value.
+        """
+        if not self.token:
+            await self.async_login()
+        cmd = build_control_command(tag_hex, value)
+        headers = {**_COMMON_HEADERS, "Authorization": f"Bearer {self.token}"}
+        try:
+            async with self.session.get(
+                CONTROL_ENDPOINT,
+                params={"snCode": sn_code, "cmd": cmd},
+                headers=headers,
+            ) as resp:
+                if resp.status == 401 and not _retried:
+                    await self.async_login()
+                    return await self.async_send_control(
+                        sn_code, tag_hex, value, _retried=True
+                    )
+                text = await resp.text()
+        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+            _LOGGER.debug("FOSSiBOT control request failed: %s", err)
+            raise FossibotConnectionError(
+                f"control command to {sn_code} failed: {err}"
+            ) from err
+
+        _LOGGER.debug(
+            "FOSSiBOT control %s tag=%s value=%s cmd=%s -> status=%s body=%s",
+            sn_code,
+            tag_hex,
+            value,
+            cmd,
+            resp.status,
+            text,
+        )
+        try:
+            data = json.loads(text)
+        except ValueError:
+            # Best-effort: an unparsable response shouldn't crash the switch,
+            # since the command may well have succeeded anyway (the six
+            # captured examples were all read as plain 200/JSON, but this
+            # endpoint's error shape was never actually captured).
+            return
+        if data.get("code") != 200:
+            raise FossibotConnectionError(
+                data.get("msg", f"control command failed (HTTP {resp.status})")
+            )
 
 
 class FossibotWebSocket:

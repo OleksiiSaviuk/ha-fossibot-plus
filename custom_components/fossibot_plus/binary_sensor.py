@@ -1,7 +1,11 @@
-"""Read-only boolean state (main power, AC output relay).
+"""Diagnostic boolean mirror(s) - real AC/DC/USB control now lives in switch.py.
 
-Actual control (switches) is a separate follow-up per the user's plan -
-these are diagnostic/state read-back only.
+The tag this module used to call "main power" (2700) turned out, once a
+Charles capture of the control commands came in, to actually be the AC
+on/off tag itself - the same one switch.py's ac_output switch reads and
+writes. Duplicating it here as a read-only binary_sensor would just be
+noise, so it's gone; only the still-separate "mirror" tag is kept, as a
+diagnostic in case it ever proves useful or diverges from the real one.
 """
 from __future__ import annotations
 
@@ -16,13 +20,12 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, TAG_AC_OUTPUT, TAG_POWER_STATE
+from .const import DOMAIN, TAG_AC_STATE_MIRROR
 from .coordinator import FossibotCoordinator
 
 # (key, tag, translation_key)
 BINARY_SENSOR_TYPES: tuple[tuple[str, str, str], ...] = (
-    ("main_power", TAG_POWER_STATE, "main_power"),
-    ("ac_output", TAG_AC_OUTPUT, "ac_output"),
+    ("ac_state_mirror_raw", TAG_AC_STATE_MIRROR, "ac_state_mirror_raw"),
 )
 
 
@@ -40,6 +43,7 @@ async def async_setup_entry(
 
 class FossibotBinarySensor(CoordinatorEntity[FossibotCoordinator], BinarySensorEntity):
     _attr_device_class = BinarySensorDeviceClass.POWER
+    _attr_entity_registry_enabled_default = False
 
     def __init__(
         self,
@@ -59,6 +63,10 @@ class FossibotBinarySensor(CoordinatorEntity[FossibotCoordinator], BinarySensorE
             name=coordinator.device_name,
             manufacturer="FOSSiBOT",
         )
+
+    @property
+    def available(self) -> bool:
+        return super().available and self.coordinator.online
 
     @property
     def is_on(self) -> bool | None:

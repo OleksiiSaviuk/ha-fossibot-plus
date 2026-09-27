@@ -25,8 +25,21 @@ class FossibotCoordinator(DataUpdateCoordinator[dict[str, int]]):
         super().__init__(hass, _LOGGER, name=f"{DOMAIN}_{sn_code}")
         self.sn_code = sn_code
         self.device_name = device_name
+        # From user_device/list's "state" field (polled separately - see
+        # __init__.py - since it's REST-only, not part of WS telemetry).
+        # Starts True optimistically until the first poll confirms it.
+        self.online: bool = True
         self._api = api
         self._ws = FossibotWebSocket(api.session, api, sn_code, self._on_data)
+
+    def set_online(self, online: bool) -> None:
+        if online == self.online:
+            return
+        self.online = online
+        # No new telemetry data to push, but entities need to re-evaluate
+        # `available` (see sensor.py/binary_sensor.py/switch.py) now that
+        # the device's online state has changed.
+        self.async_update_listeners()
 
     def _on_data(self, metrics: dict[str, int]) -> None:
         self.async_set_updated_data(metrics)

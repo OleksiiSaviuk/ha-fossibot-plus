@@ -40,28 +40,42 @@
       "input_power_raw": {
         "name": "Input power (raw, unconfirmed guess)"
       },
+      "input_power_mirror_raw": {
+        "name": "Input power (mirror tag, raw, unconfirmed guess)"
+      },
+      "charging_active_raw": {
+        "name": "Charging active (raw, unconfirmed)"
+      },
       "battery_voltage_raw": {
         "name": "Battery voltage (raw, unconfirmed guess)"
       },
-      "dc_output_raw": {
-        "name": "DC output tag (raw, likely static)"
-      },
-      "usb_output_raw": {
-        "name": "USB output tag (raw, likely static)"
-      },
       "input_voltage_or_current_raw": {
-        "name": "Input voltage/current (raw, likely static)"
+        "name": "Input voltage/current (raw, unconfirmed)"
+      },
+      "unknown_2c00_raw": {
+        "name": "Unknown value 0x2c00 (raw, unconfirmed)"
+      },
+      "unknown_2d00_raw": {
+        "name": "Unknown value 0x2d00 (raw, unconfirmed)"
       },
       "battery_pack_raw": {
         "name": "Battery pack value (raw, unconfirmed)"
       }
     },
     "binary_sensor": {
-      "main_power": {
-        "name": "Main power"
-      },
+      "ac_state_mirror_raw": {
+        "name": "AC state (mirror tag, raw, unconfirmed)"
+      }
+    },
+    "switch": {
       "ac_output": {
         "name": "AC output"
+      },
+      "dc_output": {
+        "name": "DC output"
+      },
+      "usb_output": {
+        "name": "USB output"
       }
     }
   }

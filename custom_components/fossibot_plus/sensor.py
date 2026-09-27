@@ -29,14 +29,16 @@ from .const import (
     TAG_BATTERY_PACK,
     TAG_BATTERY_SOC,
     TAG_BATTERY_VOLTAGE_CANDIDATE,
-    TAG_DC_OUTPUT,
+    TAG_CHARGING_ACTIVE_CANDIDATE,
     TAG_INPUT_POWER_CANDIDATE,
+    TAG_INPUT_POWER_MIRROR_CANDIDATE,
     TAG_INPUT_VOLTAGE,
     TAG_OUTPUT_POWER,
     TAG_OUTPUT_POWER_MIRROR,
     TAG_REMAINING_MINUTES,
     TAG_TEMPERATURE,
-    TAG_USB_OUTPUT,
+    TAG_UNKNOWN_2C00,
+    TAG_UNKNOWN_2D00,
 )
 from .coordinator import FossibotCoordinator
 
@@ -90,8 +92,8 @@ SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    # --- Candidates - plausible but not yet confirmed by a matching real-
-    # world reading; disabled by default until verified -------------------
+    # --- Candidates - plausible but not yet fully confirmed; disabled by
+    # default until verified with more data --------------------------------
     # Identical to output_power in every frame observed so far. Kept
     # separate in case it diverges once DC/USB output alongside AC.
     FossibotSensorDescription(
@@ -102,19 +104,45 @@ SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         entity_registry_enabled_default=False,
     ),
-    # Always 0 so far (same as the app's AC input in every capture) -
-    # plausible position, but weak evidence; needs a real charging session
-    # to confirm.
+    # Direct watt value (scale 1:1). Confirmed by a stable AC-charging
+    # session: 1300 ramped from ~262W at plug-in up to 398-402W at steady
+    # state, matching the app's reported "~400W" input load exactly.
+    # 1300 and 1400 (output power) are mutually exclusive - never both
+    # nonzero at the same time - which makes sense: one is for charging,
+    # one for discharging.
     FossibotSensorDescription(
         key="input_power_raw",
         tag=TAG_INPUT_POWER_CANDIDATE,
         translation_key="input_power_raw",
         native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
+        scale=1,
         entity_registry_enabled_default=False,
     ),
-    # ~23.1V, stable so far and plausible for a LiFePO4 pack at ~65% SOC,
-    # but not checked against a second, clearly different SOC reading yet.
+    # Mirrors input_power_raw in every frame so far, same relationship as
+    # the output_power/output_power_mirror_raw pair.
+    FossibotSensorDescription(
+        key="input_power_mirror_raw",
+        tag=TAG_INPUT_POWER_MIRROR_CANDIDATE,
+        translation_key="input_power_mirror_raw",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        scale=1,
+        entity_registry_enabled_default=False,
+    ),
+    # 0 whenever idle, 1 throughout an active AC-charging capture - decent
+    # correlation, but only two distinct states tested so far.
+    FossibotSensorDescription(
+        key="charging_active_raw",
+        tag=TAG_CHARGING_ACTIVE_CANDIDATE,
+        translation_key="charging_active_raw",
+        entity_registry_enabled_default=False,
+    ),
+    # ~23.1V at 64-67% SOC while idle, but ~22.9-23.0V at 77% SOC while
+    # charging - lower at a higher SOC is backwards for a simple resting
+    # pack voltage, so treat this one with extra caution (see const.py).
     FossibotSensorDescription(
         key="battery_voltage_raw",
         tag=TAG_BATTERY_VOLTAGE_CANDIDATE,
@@ -125,26 +153,27 @@ SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
         entity_registry_enabled_default=False,
     ),
     # --- Unconfirmed / likely mislabeled - raw diagnostics, off by default -
-    # Stayed constant regardless of the DC/USB toggle state in the app -
-    # likely a static value (e.g. a port count), not live on/off state.
-    FossibotSensorDescription(
-        key="dc_output_raw",
-        tag=TAG_DC_OUTPUT,
-        translation_key="dc_output_raw",
-        entity_registry_enabled_default=False,
-    ),
-    FossibotSensorDescription(
-        key="usb_output_raw",
-        tag=TAG_USB_OUTPUT,
-        translation_key="usb_output_raw",
-        entity_registry_enabled_default=False,
-    ),
-    # Stayed constant (400) across two captures with very different power
-    # states - likely a static/rated spec value, not a live measurement.
+    # Was constant 400 while idle, but dropped to 200 once AC charging
+    # started - clearly charging-related, but exact meaning/scale unknown.
     FossibotSensorDescription(
         key="input_voltage_or_current_raw",
         tag=TAG_INPUT_VOLTAGE,
         translation_key="input_voltage_or_current_raw",
+        entity_registry_enabled_default=False,
+    ),
+    # NOT the DC/USB on/off flags (those are confirmed elsewhere - see
+    # switch.py); stayed at raw value 2 regardless of DC/USB state in every
+    # capture. Likely unrelated (e.g. a port count or mode setting).
+    FossibotSensorDescription(
+        key="unknown_2c00_raw",
+        tag=TAG_UNKNOWN_2C00,
+        translation_key="unknown_2c00_raw",
+        entity_registry_enabled_default=False,
+    ),
+    FossibotSensorDescription(
+        key="unknown_2d00_raw",
+        tag=TAG_UNKNOWN_2D00,
+        translation_key="unknown_2d00_raw",
         entity_registry_enabled_default=False,
     ),
     # No established physical meaning - see const.py notes on TAG_BATTERY_PACK.
@@ -183,6 +212,10 @@ class FossibotSensor(CoordinatorEntity[FossibotCoordinator], SensorEntity):
             name=coordinator.device_name,
             manufacturer="FOSSiBOT",
         )
+
+    @property
+    def available(self) -> bool:
+        return super().available and self.coordinator.online
 
     @property
     def native_value(self):
