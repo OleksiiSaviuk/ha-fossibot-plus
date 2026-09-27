@@ -12,7 +12,9 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
+    UnitOfElectricPotential,
     UnitOfFrequency,
+    UnitOfPower,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -26,12 +28,14 @@ from .const import (
     TAG_AC_FREQUENCY,
     TAG_BATTERY_PACK,
     TAG_BATTERY_SOC,
+    TAG_BATTERY_VOLTAGE_CANDIDATE,
     TAG_DC_OUTPUT,
+    TAG_INPUT_POWER_CANDIDATE,
     TAG_INPUT_VOLTAGE,
+    TAG_OUTPUT_POWER,
+    TAG_OUTPUT_POWER_MIRROR,
     TAG_REMAINING_MINUTES,
     TAG_TEMPERATURE,
-    TAG_UNKNOWN_1400,
-    TAG_UNKNOWN_2300,
     TAG_USB_OUTPUT,
 )
 from .coordinator import FossibotCoordinator
@@ -78,25 +82,49 @@ SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         scale=0.1,
     ),
+    FossibotSensorDescription(
+        key="output_power",
+        tag=TAG_OUTPUT_POWER,
+        translation_key="output_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    # --- Candidates - plausible but not yet confirmed by a matching real-
+    # world reading; disabled by default until verified -------------------
+    # Identical to output_power in every frame observed so far. Kept
+    # separate in case it diverges once DC/USB output alongside AC.
+    FossibotSensorDescription(
+        key="output_power_mirror_raw",
+        tag=TAG_OUTPUT_POWER_MIRROR,
+        translation_key="output_power_mirror_raw",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_registry_enabled_default=False,
+    ),
+    # Always 0 so far (same as the app's AC input in every capture) -
+    # plausible position, but weak evidence; needs a real charging session
+    # to confirm.
+    FossibotSensorDescription(
+        key="input_power_raw",
+        tag=TAG_INPUT_POWER_CANDIDATE,
+        translation_key="input_power_raw",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_registry_enabled_default=False,
+    ),
+    # ~23.1V, stable so far and plausible for a LiFePO4 pack at ~65% SOC,
+    # but not checked against a second, clearly different SOC reading yet.
+    FossibotSensorDescription(
+        key="battery_voltage_raw",
+        tag=TAG_BATTERY_VOLTAGE_CANDIDATE,
+        translation_key="battery_voltage_raw",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        scale=0.01,
+        entity_registry_enabled_default=False,
+    ),
     # --- Unconfirmed / likely mislabeled - raw diagnostics, off by default -
-    # Value happened to equal the live output power (11 W) in the one
-    # sample taken so far - could be power, could be a real temperature
-    # that's coincidentally the same number. Needs a second, clearly
-    # different power reading to tell apart.
-    FossibotSensorDescription(
-        key="unknown_1400_raw",
-        tag=TAG_UNKNOWN_1400,
-        translation_key="unknown_1400_raw",
-        state_class=SensorStateClass.MEASUREMENT,
-        entity_registry_enabled_default=False,
-    ),
-    FossibotSensorDescription(
-        key="unknown_2300_raw",
-        tag=TAG_UNKNOWN_2300,
-        translation_key="unknown_2300_raw",
-        state_class=SensorStateClass.MEASUREMENT,
-        entity_registry_enabled_default=False,
-    ),
     # Stayed constant regardless of the DC/USB toggle state in the app -
     # likely a static value (e.g. a port count), not live on/off state.
     FossibotSensorDescription(

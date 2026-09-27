@@ -21,6 +21,14 @@ WS_URL = "ws://app.fossibot.hk/ws"
 HEARTBEAT_INTERVAL = 5  # seconds - server drops idle connections after ~15s
 RECONNECT_DELAY = 5     # seconds before retrying a dropped websocket
 
+# Watchdog: normal server push cadence is ~1 frame/second (measured from a
+# live capture). Seen in the field: the WS connection can die silently at
+# the network level (no close frame, no exception - likely a NAT/proxy
+# dropping an idle TCP session without FIN/RST) and `heartbeat=None` on
+# ws_connect means aiohttp won't notice either. If nothing arrives for this
+# long, force-close and reconnect rather than hang indefinitely.
+FRAME_SILENCE_TIMEOUT = 30  # seconds
+
 # The backend has a RuoYi-style anti-duplicate-submission guard: an
 # identical login body sent again within a few seconds of a previous one
 # gets rejected with msg "不允许重复提交，请稍候再试" even though the
@@ -55,16 +63,37 @@ TAG_POWER_STATE = "2700"          # main power on/off (0/1)
 TAG_AC_OUTPUT = "2b00"            # AC output relay on/off (0/1) - confirmed BOTH
                                    # directions: 0 with the app's AC toggle off,
                                    # 1 with it on
+TAG_OUTPUT_POWER = "1400"         # Watts. Source spec called this "inverter
+                                   # temperature" - wrong. Confirmed by TWO
+                                   # independent live samples matching the app's
+                                   # output-power readout to the exact watt:
+                                   # 11 -> 11W, and later 10 -> 10W.
+TAG_OUTPUT_POWER_MIRROR = "2300"  # Identical to TAG_OUTPUT_POWER in every frame
+                                   # observed so far (source spec called this
+                                   # "battery temperature"). Kept as a separate
+                                   # raw diagnostic in case it turns out to
+                                   # diverge once DC/USB output alongside AC.
+
+# CANDIDATES - plausible but not yet confirmed by a matching real-world value:
+TAG_INPUT_POWER_CANDIDATE = "0400"  # Sits right after TAG_REMAINING_MINUTES,
+                                     # a natural spot for "input power" - but it
+                                     # has only ever been observed at 0, same as
+                                     # AC input in every capture so far. Weak
+                                     # evidence: many unrelated tags are also 0
+                                     # at rest. Needs a live capture during
+                                     # actual AC/solar charging (input > 0W in
+                                     # the app) to confirm or rule out.
+TAG_BATTERY_VOLTAGE_CANDIDATE = "1500"  # raw * 0.01 = ~23.1V, stable across all
+                                     # captures so far, plausible for a LiFePO4
+                                     # pack at ~65% SOC. Not yet confirmed - the
+                                     # app doesn't display a raw voltage number
+                                     # to check against. Would need a second
+                                     # reading at a clearly different SOC to see
+                                     # if it moves the way a real pack voltage
+                                     # should.
 
 # UNCONFIRMED / likely wrong as originally documented - kept only as raw
 # diagnostics, disabled by default in sensor.py:
-TAG_UNKNOWN_1400 = "1400"         # source spec called this "inverter temperature".
-                                   # In the one live sample so far its value (11)
-                                   # happened to equal the app's output power (11W)
-                                   # - could be power, could be coincidence with a
-                                   # real temperature. Needs a second data point at
-                                   # a different, distinctly non-11 output wattage.
-TAG_UNKNOWN_2300 = "2300"         # same situation/caveat as TAG_UNKNOWN_1400.
 TAG_BATTERY_PACK = "0500"         # NOT actually two packed 16-bit sub-values as
                                    # previously assumed - that was a misreading on
                                    # my part. The real frame has a separate,

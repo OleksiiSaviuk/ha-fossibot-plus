@@ -17,6 +17,7 @@ import aiohttp
 
 from .const import (
     DEVICE_LIST_ENDPOINT,
+    FRAME_SILENCE_TIMEOUT,
     HEARTBEAT_INTERVAL,
     LOGIN_DUPLICATE_SUBMIT_MARKER,
     LOGIN_ENDPOINT,
@@ -219,7 +220,22 @@ class FossibotWebSocket:
         async with self._session.ws_connect(WS_URL, headers=headers, heartbeat=None) as ws:
             self._heartbeat_task = asyncio.create_task(self._send_heartbeat(ws))
             try:
-                async for msg in ws:
+                while True:
+                    # `async for msg in ws` blocks forever if the connection
+                    # dies silently at the network level (no close frame, no
+                    # exception - observed in the field). Bound each read so
+                    # a dead-but-not-closed socket still triggers reconnect.
+                    try:
+                        msg = await asyncio.wait_for(
+                            ws.receive(), timeout=FRAME_SILENCE_TIMEOUT
+                        )
+                    except asyncio.TimeoutError:
+                        _LOGGER.warning(
+                            "FOSSiBOT WS %s: no data for %ss, reconnecting",
+                            self._sn_code,
+                            FRAME_SILENCE_TIMEOUT,
+                        )
+                        return
                     if msg.type == aiohttp.WSMsgType.TEXT:
                         self._handle_frame(msg.data)
                     elif msg.type in (
@@ -227,7 +243,7 @@ class FossibotWebSocket:
                         aiohttp.WSMsgType.ERROR,
                         aiohttp.WSMsgType.CLOSE,
                     ):
-                        break
+                        return
             finally:
                 self._heartbeat_task.cancel()
 
