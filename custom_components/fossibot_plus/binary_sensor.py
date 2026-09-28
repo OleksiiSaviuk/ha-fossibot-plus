@@ -24,8 +24,8 @@ from .const import DOMAIN, TAG_AC_STATE_MIRROR
 from .coordinator import FossibotCoordinator
 
 # (key, tag, translation_key)
-BINARY_SENSOR_TYPES: tuple[tuple[str, str, str], ...] = (
-    ("ac_state_mirror_raw", TAG_AC_STATE_MIRROR, "ac_state_mirror_raw"),
+BINARY_SENSOR_TYPES: tuple[tuple[str, str, str, str], ...] = (
+    ("ac_state_mirror_raw", TAG_AC_STATE_MIRROR, "ac_state_mirror_raw", "AC state mirror"),
 )
 
 
@@ -34,9 +34,9 @@ async def async_setup_entry(
 ) -> None:
     data = hass.data[DOMAIN][entry.entry_id]
     entities = [
-        FossibotBinarySensor(coordinator, key, tag, translation_key)
+        FossibotBinarySensor(coordinator, key, tag, translation_key, name)
         for coordinator in data["coordinators"].values()
-        for key, tag, translation_key in BINARY_SENSOR_TYPES
+        for key, tag, translation_key, name in BINARY_SENSOR_TYPES
     ]
     async_add_entities(entities)
 
@@ -44,6 +44,7 @@ async def async_setup_entry(
 class FossibotBinarySensor(CoordinatorEntity[FossibotCoordinator], BinarySensorEntity):
     _attr_device_class = BinarySensorDeviceClass.POWER
     _attr_entity_registry_enabled_default = False
+    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -51,11 +52,12 @@ class FossibotBinarySensor(CoordinatorEntity[FossibotCoordinator], BinarySensorE
         key: str,
         tag: str,
         translation_key: str,
+        name: str,
     ) -> None:
         super().__init__(coordinator)
         self._tag = tag
         self.entity_description = BinarySensorEntityDescription(
-            key=key, translation_key=translation_key
+            key=key, translation_key=translation_key, name=name
         )
         self._attr_unique_id = f"{coordinator.sn_code}_{key}"
         self._attr_device_info = DeviceInfo(

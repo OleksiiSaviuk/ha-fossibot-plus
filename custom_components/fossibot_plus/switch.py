@@ -22,10 +22,10 @@ from .coordinator import FossibotCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 # (key, tag, translation_key)
-SWITCH_TYPES: tuple[tuple[str, str, str], ...] = (
-    ("ac_output", TAG_AC_STATE, "ac_output"),
-    ("dc_output", TAG_DC_STATE, "dc_output"),
-    ("usb_output", TAG_USB_STATE, "usb_output"),
+SWITCH_TYPES: tuple[tuple[str, str, str, str], ...] = (
+    ("ac_output",  TAG_AC_STATE,  "ac_output",  "AC output"),
+    ("dc_output",  TAG_DC_STATE,  "dc_output",  "DC output"),
+    ("usb_output", TAG_USB_STATE, "usb_output", "USB output"),
 )
 
 
@@ -35,14 +35,16 @@ async def async_setup_entry(
     data = hass.data[DOMAIN][entry.entry_id]
     api: FossibotApiClient = data["api"]
     entities = [
-        FossibotSwitch(coordinator, api, key, tag, translation_key)
+        FossibotSwitch(coordinator, api, key, tag, translation_key, name)
         for coordinator in data["coordinators"].values()
-        for key, tag, translation_key in SWITCH_TYPES
+        for key, tag, translation_key, name in SWITCH_TYPES
     ]
     async_add_entities(entities)
 
 
 class FossibotSwitch(CoordinatorEntity[FossibotCoordinator], SwitchEntity):
+    _attr_has_entity_name = True
+
     def __init__(
         self,
         coordinator: FossibotCoordinator,
@@ -50,12 +52,13 @@ class FossibotSwitch(CoordinatorEntity[FossibotCoordinator], SwitchEntity):
         key: str,
         tag: str,
         translation_key: str,
+        name: str,
     ) -> None:
         super().__init__(coordinator)
         self._api = api
         self._tag = tag
         self.entity_description = SwitchEntityDescription(
-            key=key, translation_key=translation_key
+            key=key, translation_key=translation_key, name=name
         )
         self._attr_unique_id = f"{coordinator.sn_code}_{key}"
         self._attr_device_info = DeviceInfo(
