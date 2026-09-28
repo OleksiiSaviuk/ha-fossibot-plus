@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -32,45 +33,57 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     devices = await api.async_get_devices()
 
     coordinators: dict[str, FossibotCoordinator] = {}
-    for device in devices:
-        sn_code = device["snCode"]
-        # Include the serial number in the device name so multiple stations
-        # (different models or several of the same model) don't all show up
-        # as an identical "Fossibot" in the HA device list.
-        device_name = f"{device.get('deviceName', 'Fossibot')}-{sn_code}"
-        coordinator = FossibotCoordinator(hass, api, sn_code, device_name)
-        # "state" from user_device/list is the device's online/offline flag
-        # (confirmed via a Charles capture: state:false while the station
-        # was powered off/offline) - seed it before the first poll below.
-        coordinator.set_online(bool(device.get("state", True)))
-        await coordinator.async_start()
-        coordinators[sn_code] = coordinator
+    try:
+        for device in devices:
+            sn_code = device["snCode"]
+            # Include the serial number in the device name so multiple stations
+            # (different models or several of the same model) don't all show up
+            # as an identical "Fossibot" in the HA device list.
+            device_name = f"{device.get('deviceName', 'Fossibot')}-{sn_code}"
+            coordinator = FossibotCoordinator(hass, api, sn_code, device_name)
+            # "state" from user_device/list is the device's online/offline flag
+            # (confirmed via a Charles capture: state:false while the station
+            # was powered off/offline) - seed it before the first poll below.
+            coordinator.set_online(bool(device.get("state", True)))
+            await coordinator.async_start()
+            coordinators[sn_code] = coordinator
 
-    async def _async_refresh_online_status(_now=None) -> None:
-        # Online/offline is a REST-only field, not part of the WS telemetry
-        # frames, so it has to be polled separately on a timer.
-        try:
-            fresh_devices = await api.async_get_devices()
-        except (FossibotAuthError, FossibotConnectionError) as err:
-            _LOGGER.debug("Could not refresh FOSSiBOT online status: %s", err)
-            return
-        seen: set[str] = set()
-        for device in fresh_devices:
-            sn_code = device.get("snCode")
-            coordinator = coordinators.get(sn_code)
-            if coordinator is None:
-                continue
-            seen.add(sn_code)
-            coordinator.set_online(bool(device.get("state", False)))
-        # A device that has disappeared from the list entirely is treated
-        # as offline too, rather than left showing its last-known state.
-        for sn_code, coordinator in coordinators.items():
-            if sn_code not in seen:
-                coordinator.set_online(False)
+        async def _async_refresh_online_status(_now=None) -> None:
+            # Online/offline is a REST-only field, not part of the WS telemetry
+            # frames, so it has to be polled separately on a timer.
+            # async_get_devices() handles its own token refresh (re-login on 401)
+            # so no extra async_login() call needed here.
+            try:
+                fresh_devices = await api.async_get_devices()
+            except (FossibotAuthError, FossibotConnectionError) as err:
+                _LOGGER.debug("Could not refresh FOSSiBOT online status: %s", err)
+                return
+            seen: set[str] = set()
+            for device in fresh_devices:
+                sn_code = device.get("snCode")
+                coordinator = coordinators.get(sn_code)
+                if coordinator is None:
+                    continue
+                seen.add(sn_code)
+                coordinator.set_online(bool(device.get("state", False)))
+            # A device that has disappeared from the list entirely is treated
+            # as offline too, rather than left showing its last-known state.
+            for sn_code, coordinator in coordinators.items():
+                if sn_code not in seen:
+                    coordinator.set_online(False)
 
-    remove_status_listener = async_track_time_interval(
-        hass, _async_refresh_online_status, DEVICE_STATUS_POLL_INTERVAL
-    )
+        remove_status_listener = async_track_time_interval(
+            hass,
+            _async_refresh_online_status,
+            timedelta(seconds=DEVICE_STATUS_POLL_INTERVAL),
+        )
+    except Exception:
+        # If anything after async_start() fails, ensure WS tasks are not
+        # left running in the background (they would keep reconnecting and
+        # fighting with the next async_setup_entry attempt).
+        for coordinator in coordinators.values():
+            await coordinator.async_stop()
+        raise
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         "api": api,
