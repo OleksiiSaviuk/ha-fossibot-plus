@@ -96,6 +96,10 @@ TAG_USB_STATE = "2900"            # USB output on/off (0/1) - confirmed the same
                                    # as TAG_AC_STATE, matches the app's USB toggle
                                    # (only ever observed while off, but the control
                                    # tag match itself is solid evidence).
+TAG_LED_MODE = "2600"             # LED mode: 0=off, 1=steady, 2=SOS, 3=strobe.
+                                   # Confirmed from 4 captured ctrl commands (all CRC
+                                   # match) AND from live WS telemetry (values 0, 1,
+                                   # 3 observed in a single session).
 
 # MIRRORS - identical to a confirmed tag in every frame observed so far;
 # kept as separate raw diagnostics in case they ever diverge:

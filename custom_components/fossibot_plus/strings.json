@@ -77,6 +77,17 @@
       "usb_output": {
         "name": "USB output"
       }
+    },
+    "select": {
+      "led_mode": {
+        "name": "LED mode",
+        "state": {
+          "off": "Off",
+          "steady": "Steady",
+          "sos": "SOS",
+          "strobe": "Strobe"
+        }
+      }
     }
   }
 }

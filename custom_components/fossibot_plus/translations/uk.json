@@ -77,6 +77,17 @@
       "usb_output": {
         "name": "USB"
       }
+    },
+    "select": {
+      "led_mode": {
+        "name": "Режим LED",
+        "state": {
+          "off": "Вимкнено",
+          "steady": "Постійний",
+          "sos": "SOS",
+          "strobe": "Стробоскоп"
+        }
+      }
     }
   }
 }
