@@ -26,10 +26,10 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import (
     DOMAIN,
     TAG_AC_FREQUENCY,
+    TAG_AC_OUTPUT_VOLTAGE,
     TAG_BATTERY_PACK,
     TAG_BATTERY_SOC,
-    TAG_BATTERY_VOLTAGE_CANDIDATE,
-    TAG_CHARGING_ACTIVE_CANDIDATE,
+    TAG_CHARGING_ACTIVE,
     TAG_INPUT_POWER_CANDIDATE,
     TAG_INPUT_POWER_MIRROR_CANDIDATE,
     TAG_INPUT_VOLTAGE,
@@ -129,22 +129,27 @@ SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
         scale=1,
         entity_registry_enabled_default=False,
     ),
+    # Confirmed: 0 when idle/fully charged, 1 when actively charging
     FossibotSensorDescription(
-        key="charging_active_raw",
-        tag=TAG_CHARGING_ACTIVE_CANDIDATE,
-        name="Charging active",
-        translation_key="charging_active_raw",
-        entity_registry_enabled_default=False,
+        key="charging_active",
+        tag=TAG_CHARGING_ACTIVE,
+        name="Charging",
+        translation_key="charging_active",
+        device_class=SensorDeviceClass.ENUM,
+        entity_registry_enabled_default=True,
     ),
+    # Confirmed: raw * 0.1 = AC output voltage in volts.
+    # 2311-2312 → 231.1-231.2 V when AC output is ON, 0 when OFF.
     FossibotSensorDescription(
-        key="battery_voltage_raw",
-        tag=TAG_BATTERY_VOLTAGE_CANDIDATE,
-        name="Battery voltage",
-        translation_key="battery_voltage_raw",
+        key="ac_output_voltage",
+        tag=TAG_AC_OUTPUT_VOLTAGE,
+        name="AC output voltage",
+        translation_key="ac_output_voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
-        scale=0.01,
-        entity_registry_enabled_default=False,
+        scale=0.1,
+        entity_registry_enabled_default=True,
     ),
     # --- Unconfirmed (disabled by default) ---
     FossibotSensorDescription(

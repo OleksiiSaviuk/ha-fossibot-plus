@@ -110,33 +110,24 @@ TAG_AC_STATE_MIRROR = "2b00"      # == TAG_AC_STATE in every frame so far. This 
                                    # AC-state tag before the control-command capture
                                    # revealed 2700 is the one the app actually writes.
 
-# CANDIDATES - plausible but not yet fully confirmed:
-TAG_CHARGING_ACTIVE_CANDIDATE = "0400"  # 0 in every idle/output-only capture so
-                                     # far, 1 throughout a live AC-charging
-                                     # capture - decent binary correlation, but
-                                     # only tested across two distinct states.
+# CONFIRMED by cross-checking WS telemetry with real device state:
+TAG_CHARGING_ACTIVE = "0400"    # 1 while actively charging battery, 0 when idle
+                                 # or battery full. Confirmed: 0 before plug-in,
+                                 # 1 throughout charging session.
+TAG_AC_OUTPUT_VOLTAGE = "1500"  # AC output voltage. raw * 0.1 = V.
+                                 # Observed 2311-2312 → 231.1-231.2 V when AC
+                                 # output is ON, 0 when AC output is OFF.
+                                 # Matches Ukrainian mains (230 V nominal exactly).
+                                 # Previously mislabeled "battery voltage" - wrong.
+
+# CANDIDATES - plausible but not yet confirmed by on-screen readout:
 TAG_INPUT_POWER_CANDIDATE = "1300"  # Direct watts (scale 1:1). Confirmed by a
                                      # full AC-charging session: ramped from ~262W
                                      # on plug-in to 398-402W at steady state,
-                                     # matching the app's "~400W" input load. Never
-                                     # nonzero at the same time as 1400 (output),
-                                     # which makes sense (in vs out). Still labeled
-                                     # "candidate" because the exact app wattage was
-                                     # eyeballed ("~400W") rather than read off the
-                                     # screen at the precise same instant as the log
-                                     # frame - but the correlation is very tight.
-TAG_INPUT_POWER_MIRROR_CANDIDATE = "2200"  # == TAG_INPUT_POWER_CANDIDATE in every
-                                     # frame so far, same relationship as the
-                                     # 1400/2300 output-power mirror pair.
-TAG_BATTERY_VOLTAGE_CANDIDATE = "1500"  # raw * 0.01 = V. ~23.1V at 64-67% SOC
-                                     # (idle), but ~22.9-23.0V at 77% SOC while
-                                     # charging - LOWER at higher SOC, which is
-                                     # backwards for a simple resting pack
-                                     # voltage. Could still be right if this is
-                                     # terminal voltage under charge current
-                                     # rather than open-circuit voltage, but
-                                     # that's an extra assumption - treat with
-                                     # more caution than the other candidates.
+                                     # matching the app's "~400W" input load. Still
+                                     # labeled "candidate" because the exact app
+                                     # wattage was eyeballed, not pixel-read.
+TAG_INPUT_POWER_MIRROR_CANDIDATE = "2200"  # == TAG_INPUT_POWER_CANDIDATE always.
 
 # UNCONFIRMED / likely wrong as originally documented - kept only as raw
 # diagnostics, disabled by default in sensor.py:

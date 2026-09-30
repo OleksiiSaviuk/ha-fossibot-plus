@@ -43,12 +43,6 @@
       "input_power_mirror_raw": {
         "name": "Input power (mirror tag, raw, unconfirmed guess)"
       },
-      "charging_active_raw": {
-        "name": "Charging active (raw, unconfirmed)"
-      },
-      "battery_voltage_raw": {
-        "name": "Battery voltage (raw, unconfirmed guess)"
-      },
       "input_voltage_or_current_raw": {
         "name": "Input voltage/current (raw, unconfirmed)"
       },
@@ -60,6 +54,12 @@
       },
       "battery_pack_raw": {
         "name": "Battery pack value (raw, unconfirmed)"
+      },
+      "charging_active": {
+        "name": "Charging"
+      },
+      "ac_output_voltage": {
+        "name": "AC output voltage"
       }
     },
     "binary_sensor": {
