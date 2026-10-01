@@ -5,6 +5,14 @@
         "data": {
           "email": "Електронна пошта",
           "password": "Пароль"
+        },
+        "title": "Увійдіть у Fossibot+"
+      },
+      "model": {
+        "title": "Модель пристрою",
+        "description": "Оберіть модель для правильного діапазону потужності заряджання",
+        "data": {
+          "model": "Модель"
         }
       }
     },
@@ -89,6 +97,30 @@
           "ups": "UPS",
           "eco": "ECO"
         }
+      }
+    },
+    "number": {
+      "charge_power_limit": {
+        "name": "Потужність заряджання"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Налаштування FOSSiBOT",
+        "data": {
+          "model": "Модель пристрою"
+        }
+      }
+    }
+  },
+  "selector": {
+    "model": {
+      "options": {
+        "f1800": "Fossibot F1800",
+        "f3000": "Fossibot F3000",
+        "custom": "Інша модель"
       }
     }
   }

@@ -68,3 +68,17 @@ TAG_CHARGE_POWER      = "2a00"  # Charging power (W) — previously "input volta
 # ⚠️ MIRRORS / DIAGNOSTICS — disabled by default in sensor.py:
 TAG_OUTPUT_POWER_MIRROR = "2300"  # == TAG_OUTPUT_POWER in every frame
 TAG_BATTERY_PACK        = "0500"  # unknown physical meaning
+
+# --- Model profiles for charge power limits --------------------------------
+# The charge-power tag (2a00) accepts raw watts directly (scale 1:1).
+# Limits differ by model; we store the model key in config entry options.
+CONF_MODEL = "model"
+MODEL_F1800 = "f1800"
+MODEL_F3000 = "f3000"
+MODEL_CUSTOM = "custom"
+
+CHARGE_POWER_LIMITS: dict[str, dict] = {
+    MODEL_F1800: {"min": 100, "max": 1200, "step": 100},
+    MODEL_F3000: {"min": 100, "max": 2000, "step": 100},
+    MODEL_CUSTOM: {"min": 100, "max": 2000, "step": 100},
+}
