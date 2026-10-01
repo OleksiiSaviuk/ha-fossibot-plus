@@ -2,153 +2,69 @@
 
 DOMAIN = "fossibot_plus"
 
-# Confirmed via a Charles capture of the real app traffic: the REST API is
-# plain HTTP on port 80, NOT HTTPS as the source spec claimed. (Remote
-# Address app.fossibot.hk:80, SSL: -, HTTP/1.1.) This is very likely why
-# "cannot_connect" happened - aiohttp was attempting a TLS handshake
-# against a plain-HTTP endpoint.
 BASE_URL = "http://app.fossibot.hk"
 LOGIN_ENDPOINT = f"{BASE_URL}/prod-api/app/user/login"
 DEVICE_LIST_ENDPOINT = f"{BASE_URL}/prod-api/app/user_device/list"
-# Confirmed by successfully replaying six captured commands byte-for-byte
-# (see CTRL_COMMAND_PREFIX below) - same host/scheme as login and device list.
 CONTROL_ENDPOINT = f"{BASE_URL}/prod-api/app/ctrl/route"
-# INFERRED BY ANALOGY, not yet directly confirmed: since the REST API
-# turned out to be plain HTTP rather than HTTPS, the WebSocket is almost
-# certainly plain "ws://" too (same server, same port 80 setup). If this
-# still fails to connect, capture the WS upgrade request itself in Charles
-# (it shows up as a normal HTTP GET with "Upgrade: websocket" headers) and
-# confirm scheme/host/port from there.
 WS_URL = "ws://app.fossibot.hk/ws"
 
-HEARTBEAT_INTERVAL = 5  # seconds - server drops idle connections after ~15s
-RECONNECT_DELAY = 5     # seconds before retrying a dropped websocket
+HEARTBEAT_INTERVAL = 5        # seconds — server drops idle connections after ~15s
+RECONNECT_DELAY = 5           # seconds before retrying a dropped websocket
+FRAME_SILENCE_TIMEOUT = 30    # seconds — watchdog: force-reconnect if no frame arrives
+DEVICE_STATUS_POLL_INTERVAL = 60  # seconds — REST poll for online/offline state
 
-# Watchdog: normal server push cadence is ~1 frame/second (measured from a
-# live capture). Seen in the field: the WS connection can die silently at
-# the network level (no close frame, no exception - likely a NAT/proxy
-# dropping an idle TCP session without FIN/RST) and `heartbeat=None` on
-# ws_connect means aiohttp won't notice either. If nothing arrives for this
-# long, force-close and reconnect rather than hang indefinitely.
-FRAME_SILENCE_TIMEOUT = 30  # seconds
-
-# Device online/offline comes from GET user_device/list's "state" field
-# (true/false), not from the WS telemetry stream, so it's polled separately
-# on a timer rather than derived from coordinator.data.
-DEVICE_STATUS_POLL_INTERVAL = 60  # seconds
-
-# The backend has a RuoYi-style anti-duplicate-submission guard: an
-# identical login body sent again within a few seconds of a previous one
-# gets rejected with msg "不允许重复提交，请稍候再试" even though the
-# credentials are correct. This happens in practice because the config
-# flow does one login to validate credentials, and async_setup_entry does
-# a second one moments later with a fresh client. Retry instead of
-# failing outright when this specific message is seen.
 LOGIN_DUPLICATE_SUBMIT_MARKER = "重复提交"
-LOGIN_RETRY_DELAY = 6  # seconds - comfortably past the guard's window
+LOGIN_RETRY_DELAY = 6         # seconds — pause before retrying after anti-dup guard
 LOGIN_MAX_RETRIES = 2
 
 CONF_EMAIL = "email"
 CONF_PASSWORD = "password"
 
-# --- Control command format ------------------------------------------------
-# Reverse-engineered from six captured (tag, value) -> cmd hex pairs (AC/DC/
-# USB, each on and off). All six reproduce byte-for-byte with this formula:
-#   cmd = CTRL_COMMAND_PREFIX + tag(2B LE, hex) + value(4B LE, hex)
-#         + crc16_modbus(tag_bytes + value_bytes) as 2 bytes, BIG-endian
-# CRC is CRC16/MODBUS (poly 0xA001, init 0xFFFF) computed over just the
-# 6-byte [tag+value] portion - NOT including this prefix. See api.py's
-# build_control_command() for the implementation.
+# Control command format (reverse-engineered from captured requests):
+#   cmd = PREFIX + tag(2B LE) + value(4B LE) + CRC16/MODBUS(tag+value, big-endian)
 CTRL_COMMAND_PREFIX = "0e000c000800"
 
-# --- TLV tags -------------------------------------------------------------
-# Re-derived from real live captures (custom_components.fossibot_plus debug
-# log) cross-checked against the FOSSiBOT+ app screen at the same moment
-# (2026-09-26/27), plus - for the AC/DC/USB tags - against six captured
-# control-command requests that write these exact same tags. The original
-# source spec's tag table turned out to be wrong or incomplete in several
-# places - see README.md/DEVELOPMENT.md for the full reasoning.
+# ---------------------------------------------------------------------------
+# TLV tag map
+# Derived from live WS captures cross-checked against the app screen,
+# and from captured control commands. See DEVELOPMENT.md for full history.
+# ---------------------------------------------------------------------------
 
-# CONFIRMED - both by matching the app's readout AND (for AC/DC/USB) by the
-# control command that writes this exact tag:
-TAG_BATTERY_SOC = "0100"          # battery %, matches app's SOC readout exactly
-TAG_TEMPERATURE = "0200"          # deg C, matches the single dial-icon temperature
-TAG_REMAINING_MINUTES = "0300"    # minutes until full/empty. The source spec called
-                                   # this "AC input power" - wrong. Matched exactly
-                                   # to the app's "X год Y хв" readout across three
-                                   # separate captures (4020, 765, and 3840 minutes).
-TAG_AC_FREQUENCY = "1600"         # raw / 10 = Hz. AC on -> ~500 (50.0Hz), AC off -> 0
-TAG_OUTPUT_POWER = "1400"         # Watts. Source spec called this "inverter
-                                   # temperature" - wrong. Confirmed by TWO
-                                   # independent live samples matching the app's
-                                   # output-power readout to the exact watt:
-                                   # 11 -> 11W, and later 10 -> 10W.
-TAG_AC_STATE = "2700"             # AC output on/off (0/1). The source spec called
-                                   # this "main power state" - also wrong. This is
-                                   # the exact tag the control command writes to
-                                   # toggle AC (confirmed by replaying the captured
-                                   # cmd hex byte-for-byte), and it matches the
-                                   # app's AC toggle in telemetry in every capture.
-TAG_DC_STATE = "2800"             # DC output on/off (0/1) - confirmed the same way
-                                   # as TAG_AC_STATE (control command's exact tag),
-                                   # and matches the app's DC toggle in every capture.
-TAG_USB_STATE = "2900"            # USB output on/off (0/1) - confirmed the same way
-                                   # as TAG_AC_STATE, matches the app's USB toggle
-                                   # (only ever observed while off, but the control
-                                   # tag match itself is solid evidence).
-TAG_LED_MODE = "2600"             # LED mode: 0=off, 1=steady, 2=SOS, 3=strobe.
-                                   # Confirmed from 4 captured ctrl commands (all CRC
-                                   # match) AND from live WS telemetry (values 0, 1,
-                                   # 3 observed in a single session).
+# ✅ CONFIRMED — matched against app readout AND/OR control-command tag:
+TAG_BATTERY_SOC       = "0100"  # battery %, matches app SOC exactly
+TAG_TEMPERATURE       = "0200"  # °C, low 16 bits only (some models pack metadata
+                                 # in the high 16 bits — taking only low16 is safe
+                                 # for all observed models: 22→22, 196638→30)
+TAG_REMAINING_MINUTES = "0300"  # minutes to full/empty (NOT watts as spec claimed)
+TAG_CHARGING_ACTIVE   = "0400"  # 1=charging, 0=idle/full — confirmed by transitions
+TAG_AC_GRID_POWER     = "1300"  # AC mains input power (W, scale 1:1) — only nonzero
+                                 # while charging from grid; mutually exclusive with
+                                 # TAG_OUTPUT_POWER (never both nonzero simultaneously)
+TAG_OUTPUT_POWER      = "1400"  # output power (W) — confirmed by two exact readings
+TAG_AC_OUTPUT_VOLTAGE = "1500"  # AC output voltage, raw*0.1=V (~231 V when AC on)
+TAG_AC_FREQUENCY      = "1600"  # AC output frequency, raw*0.1=Hz (500→50.0 Hz)
+TAG_LED_MODE          = "2600"  # LED: 0=off, 1=steady, 2=SOS, 3=strobe — confirmed
+                                 # from 4 captured ctrl cmds + live WS (0/1/3 seen)
+TAG_AC_STATE          = "2700"  # AC output on/off (0/1) — confirmed by ctrl cmd
+TAG_DC_STATE          = "2800"  # DC output on/off (0/1) — confirmed by ctrl cmd
+TAG_USB_STATE         = "2900"  # USB output on/off (0/1) — confirmed by ctrl cmd
+TAG_OUTPUT_MEMORY     = "2b00"  # Output memory (retain state after power loss):
+                                 # 0=off, 1=on — confirmed from ctrl cmd + transitions
+                                 # in log (changed 1→0 and back during session)
+TAG_SCREEN_TIMEOUT    = "2c00"  # Screen auto-off: 0=always on, 1=30s, 2=1min,
+                                 # 3=5min, 4=10min, 5=30min — user-confirmed
+TAG_POWER_OFF_TIMER   = "2d00"  # Auto power-off: 0=never, 1=5min, 2=10min,
+                                 # 3=1h, 4=8h — user-confirmed
+TAG_CHARGE_MODE       = "2e00"  # Charge mode: 0=UPS, 1=ECO — confirmed by ctrl cmds
+TAG_SOUND             = "3300"  # Sound: 0=off, 1=on — confirmed by ctrl cmd +
+                                 # transitions in log (0→1→0 during session)
+TAG_TOTAL_INPUT_POWER = "2200"  # Total input power = grid AC + solar PV (W, scale 1:1)
+                                 # mirrors TAG_AC_GRID_POWER when no solar; nonzero
+                                 # only while charging
+TAG_CHARGE_POWER      = "2a00"  # Charging power (W) — previously "input voltage/current
+                                 # raw"; was 400 at idle, dropped to 200 when charging
+                                 # started; scale and exact meaning still being refined
 
-# MIRRORS - identical to a confirmed tag in every frame observed so far;
-# kept as separate raw diagnostics in case they ever diverge:
-TAG_OUTPUT_POWER_MIRROR = "2300"  # == TAG_OUTPUT_POWER in every frame so far
-                                   # (source spec called this "battery temperature").
-TAG_AC_STATE_MIRROR = "2b00"      # == TAG_AC_STATE in every frame so far. This was
-                                   # the tag I originally (wrongly) treated as THE
-                                   # AC-state tag before the control-command capture
-                                   # revealed 2700 is the one the app actually writes.
-
-# CONFIRMED by cross-checking WS telemetry with real device state:
-TAG_CHARGING_ACTIVE = "0400"    # 1 while actively charging battery, 0 when idle
-                                 # or battery full. Confirmed: 0 before plug-in,
-                                 # 1 throughout charging session.
-TAG_AC_OUTPUT_VOLTAGE = "1500"  # AC output voltage. raw * 0.1 = V.
-                                 # Observed 2311-2312 → 231.1-231.2 V when AC
-                                 # output is ON, 0 when AC output is OFF.
-                                 # Matches Ukrainian mains (230 V nominal exactly).
-                                 # Previously mislabeled "battery voltage" - wrong.
-
-# CANDIDATES - plausible but not yet confirmed by on-screen readout:
-TAG_INPUT_POWER_CANDIDATE = "1300"  # Direct watts (scale 1:1). Confirmed by a
-                                     # full AC-charging session: ramped from ~262W
-                                     # on plug-in to 398-402W at steady state,
-                                     # matching the app's "~400W" input load. Still
-                                     # labeled "candidate" because the exact app
-                                     # wattage was eyeballed, not pixel-read.
-TAG_INPUT_POWER_MIRROR_CANDIDATE = "2200"  # == TAG_INPUT_POWER_CANDIDATE always.
-
-# UNCONFIRMED / likely wrong as originally documented - kept only as raw
-# diagnostics, disabled by default in sensor.py:
-TAG_BATTERY_PACK = "0500"         # NOT actually two packed 16-bit sub-values as
-                                   # previously assumed - that was a misreading on
-                                   # my part. The real frame has a separate,
-                                   # currently-unmapped tag "1200" right after it;
-                                   # 0500's own raw uint32 value has no known
-                                   # physical meaning yet. Exposed raw, unconfirmed.
-TAG_UNKNOWN_2C00 = "2c00"         # NOT the DC on/off flag (that's confirmed to be
-                                   # TAG_DC_STATE/2800 - see above): stayed at raw
-                                   # value 2 regardless of DC state in every
-                                   # capture. Likely unrelated (e.g. a port count
-                                   # or mode setting), meaning still unknown.
-TAG_UNKNOWN_2D00 = "2d00"         # same situation as TAG_UNKNOWN_2C00, for what
-                                   # was previously (wrongly) assumed to be USB.
-TAG_INPUT_VOLTAGE = "2a00"        # Was constant 400 across two non-charging
-                                   # captures, but dropped to 200 once AC charging
-                                   # started in a later capture - so NOT static
-                                   # after all, contrary to the earlier note here.
-                                   # Clearly related to charging somehow, but its
-                                   # exact physical meaning and scale are still
-                                   # unknown - kept raw, unconfirmed.
-
+# ⚠️ MIRRORS / DIAGNOSTICS — disabled by default in sensor.py:
+TAG_OUTPUT_POWER_MIRROR = "2300"  # == TAG_OUTPUT_POWER in every frame
+TAG_BATTERY_PACK        = "0500"  # unknown physical meaning

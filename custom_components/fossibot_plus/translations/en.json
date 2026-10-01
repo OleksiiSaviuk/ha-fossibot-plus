@@ -11,7 +11,7 @@
     "error": {
       "invalid_auth": "Invalid email or password",
       "cannot_connect": "Could not reach the FOSSiBOT cloud",
-      "unknown": "Unexpected error - check the Home Assistant log"
+      "unknown": "Unexpected error — check the Home Assistant log"
     },
     "abort": {
       "already_configured": "This account is already configured"
@@ -28,43 +28,32 @@
       "remaining_minutes": {
         "name": "Time remaining"
       },
-      "ac_frequency": {
-        "name": "AC frequency"
+      "charging": {
+        "name": "Charging"
       },
       "output_power": {
         "name": "Output power"
       },
-      "output_power_mirror_raw": {
-        "name": "Output power (mirror tag, raw, unconfirmed)"
-      },
-      "input_power_raw": {
-        "name": "Input power (raw, unconfirmed guess)"
-      },
-      "input_power_mirror_raw": {
-        "name": "Input power (mirror tag, raw, unconfirmed guess)"
-      },
-      "input_voltage_or_current_raw": {
-        "name": "Input voltage/current (raw, unconfirmed)"
-      },
-      "unknown_2c00_raw": {
-        "name": "Unknown value 0x2c00 (raw, unconfirmed)"
-      },
-      "unknown_2d00_raw": {
-        "name": "Unknown value 0x2d00 (raw, unconfirmed)"
-      },
-      "battery_pack_raw": {
-        "name": "Battery pack value (raw, unconfirmed)"
-      },
-      "charging_active": {
-        "name": "Charging"
-      },
       "ac_output_voltage": {
         "name": "AC output voltage"
-      }
-    },
-    "binary_sensor": {
-      "ac_state_mirror_raw": {
-        "name": "AC state (mirror tag, raw, unconfirmed)"
+      },
+      "ac_frequency": {
+        "name": "AC frequency"
+      },
+      "ac_grid_power": {
+        "name": "AC grid power"
+      },
+      "total_input_power": {
+        "name": "Total input power"
+      },
+      "charge_power": {
+        "name": "Charge power"
+      },
+      "output_power_mirror_raw": {
+        "name": "Output power (mirror)"
+      },
+      "battery_pack_raw": {
+        "name": "Battery pack (raw)"
       }
     },
     "switch": {
@@ -76,6 +65,12 @@
       },
       "usb_output": {
         "name": "USB output"
+      },
+      "sound": {
+        "name": "Sound"
+      },
+      "output_memory": {
+        "name": "Output memory"
       }
     },
     "select": {
@@ -86,6 +81,13 @@
           "steady": "Steady",
           "sos": "SOS",
           "strobe": "Strobe"
+        }
+      },
+      "charge_mode": {
+        "name": "Charge mode",
+        "state": {
+          "ups": "UPS",
+          "eco": "ECO"
         }
       }
     }

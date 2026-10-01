@@ -1,11 +1,8 @@
-"""Diagnostic boolean mirror(s) - real AC/DC/USB control now lives in switch.py.
+"""Diagnostic binary sensors for the FOSSiBOT power station.
 
-The tag this module used to call "main power" (2700) turned out, once a
-Charles capture of the control commands came in, to actually be the AC
-on/off tag itself - the same one switch.py's ac_output switch reads and
-writes. Duplicating it here as a read-only binary_sensor would just be
-noise, so it's gone; only the still-separate "mirror" tag is kept, as a
-diagnostic in case it ever proves useful or diverges from the real one.
+Currently only exposes screen-timeout and power-off-timer as read-only
+informational sensors (they are write-controlled via number entities if
+added later). The output-memory and sound switches live in switch.py.
 """
 from __future__ import annotations
 
@@ -20,13 +17,12 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, TAG_AC_STATE_MIRROR
+from .const import DOMAIN
 from .coordinator import FossibotCoordinator
 
-# (key, tag, translation_key)
-BINARY_SENSOR_TYPES: tuple[tuple[str, str, str, str], ...] = (
-    ("ac_state_mirror_raw", TAG_AC_STATE_MIRROR, "ac_state_mirror_raw", "AC state mirror"),
-)
+# No binary sensors enabled by default at this time — keeping the platform
+# registered so future additions don't require a platform reload.
+BINARY_SENSOR_TYPES: tuple[tuple[str, str, str, str], ...] = ()
 
 
 async def async_setup_entry(

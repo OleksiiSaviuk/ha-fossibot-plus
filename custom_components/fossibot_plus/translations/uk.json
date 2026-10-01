@@ -28,43 +28,32 @@
       "remaining_minutes": {
         "name": "Залишок часу"
       },
-      "ac_frequency": {
-        "name": "Частота мережі"
+      "charging": {
+        "name": "Заряджання"
       },
       "output_power": {
         "name": "Вихідна потужність"
       },
-      "output_power_mirror_raw": {
-        "name": "Вихідна потужність (дзеркальний тег, сире, непідтверджено)"
-      },
-      "input_power_raw": {
-        "name": "Вхідна потужність (сире, непідтверджена здогадка)"
-      },
-      "input_power_mirror_raw": {
-        "name": "Вхідна потужність (дзеркальний тег, сире, непідтверджена здогадка)"
-      },
-      "input_voltage_or_current_raw": {
-        "name": "Вхідна напруга/струм (сире, непідтверджено)"
-      },
-      "unknown_2c00_raw": {
-        "name": "Невідоме значення 0x2c00 (сире, непідтверджено)"
-      },
-      "unknown_2d00_raw": {
-        "name": "Невідоме значення 0x2d00 (сире, непідтверджено)"
-      },
-      "battery_pack_raw": {
-        "name": "Значення батарейного блоку (сире, непідтверджено)"
-      },
-      "charging_active": {
-        "name": "Заряджання"
-      },
       "ac_output_voltage": {
         "name": "Вихідна напруга AC"
-      }
-    },
-    "binary_sensor": {
-      "ac_state_mirror_raw": {
-        "name": "Стан AC (дзеркальний тег, сире, непідтверджено)"
+      },
+      "ac_frequency": {
+        "name": "Частота мережі"
+      },
+      "ac_grid_power": {
+        "name": "Потужність від мережі"
+      },
+      "total_input_power": {
+        "name": "Сумарна вхідна потужність"
+      },
+      "charge_power": {
+        "name": "Потужність заряджання"
+      },
+      "output_power_mirror_raw": {
+        "name": "Вихідна потужність (дзеркало)"
+      },
+      "battery_pack_raw": {
+        "name": "Батарейний блок (сире)"
       }
     },
     "switch": {
@@ -76,6 +65,12 @@
       },
       "usb_output": {
         "name": "USB"
+      },
+      "sound": {
+        "name": "Звук"
+      },
+      "output_memory": {
+        "name": "Пам'ять виходів"
       }
     },
     "select": {
@@ -86,6 +81,13 @@
           "steady": "Постійний",
           "sos": "SOS",
           "strobe": "Стробоскоп"
+        }
+      },
+      "charge_mode": {
+        "name": "Режим зарядки",
+        "state": {
+          "ups": "UPS",
+          "eco": "ECO"
         }
       }
     }

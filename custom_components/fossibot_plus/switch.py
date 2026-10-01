@@ -1,9 +1,4 @@
-"""AC/DC/USB output switches.
-
-Control commands were reverse-engineered from six captured requests (see
-api.py's build_control_command / const.py's CTRL_COMMAND_PREFIX) and have
-only ever been tested for exactly these three tags with values 0/1.
-"""
+"""Output and device-setting switches for the FOSSiBOT power station."""
 from __future__ import annotations
 
 import logging
@@ -16,16 +11,25 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api import FossibotApiClient
-from .const import DOMAIN, TAG_AC_STATE, TAG_DC_STATE, TAG_USB_STATE
+from .const import (
+    DOMAIN,
+    TAG_AC_STATE,
+    TAG_DC_STATE,
+    TAG_OUTPUT_MEMORY,
+    TAG_SOUND,
+    TAG_USB_STATE,
+)
 from .coordinator import FossibotCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-# (key, tag, translation_key)
+# (key, tag, translation_key, name)
 SWITCH_TYPES: tuple[tuple[str, str, str, str], ...] = (
-    ("ac_output",  TAG_AC_STATE,  "ac_output",  "AC output"),
-    ("dc_output",  TAG_DC_STATE,  "dc_output",  "DC output"),
-    ("usb_output", TAG_USB_STATE, "usb_output", "USB output"),
+    ("ac_output",      TAG_AC_STATE,      "ac_output",      "AC output"),
+    ("dc_output",      TAG_DC_STATE,      "dc_output",      "DC output"),
+    ("usb_output",     TAG_USB_STATE,     "usb_output",     "USB output"),
+    ("sound",          TAG_SOUND,         "sound",          "Sound"),
+    ("output_memory",  TAG_OUTPUT_MEMORY, "output_memory",  "Output memory"),
 )
 
 
@@ -86,11 +90,6 @@ class FossibotSwitch(CoordinatorEntity[FossibotCoordinator], SwitchEntity):
 
     async def _async_send(self, value: int) -> None:
         await self._api.async_send_control(self.coordinator.sn_code, self._tag, value)
-        # Optimistic update: reflect the change immediately rather than
-        # waiting for the next WS telemetry frame (which normally arrives
-        # within ~1s anyway, but this avoids a flicker back to the old
-        # state in the meantime). The next real frame will overwrite this
-        # with the device's actual reported state either way.
         if self.coordinator.data is not None:
             new_data = dict(self.coordinator.data)
             new_data[self._tag] = value

@@ -1,7 +1,8 @@
 """Sensor entities decoding FOSSiBOT TLV telemetry tags."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Callable
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -26,19 +27,17 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import (
     DOMAIN,
     TAG_AC_FREQUENCY,
+    TAG_AC_GRID_POWER,
     TAG_AC_OUTPUT_VOLTAGE,
     TAG_BATTERY_PACK,
     TAG_BATTERY_SOC,
+    TAG_CHARGE_POWER,
     TAG_CHARGING_ACTIVE,
-    TAG_INPUT_POWER_CANDIDATE,
-    TAG_INPUT_POWER_MIRROR_CANDIDATE,
-    TAG_INPUT_VOLTAGE,
     TAG_OUTPUT_POWER,
     TAG_OUTPUT_POWER_MIRROR,
     TAG_REMAINING_MINUTES,
     TAG_TEMPERATURE,
-    TAG_UNKNOWN_2C00,
-    TAG_UNKNOWN_2D00,
+    TAG_TOTAL_INPUT_POWER,
 )
 from .coordinator import FossibotCoordinator
 
@@ -47,10 +46,17 @@ from .coordinator import FossibotCoordinator
 class FossibotSensorDescription(SensorEntityDescription):
     tag: str = ""
     scale: float = 1
+    # Optional post-processing (e.g. take only low 16 bits)
+    raw_transform: Callable[[int], int] | None = None
+
+
+def _low16(v: int) -> int:
+    """Return only the lower 16 bits — handles models that pack metadata in high word."""
+    return v & 0xFFFF
 
 
 SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
-    # --- Confirmed against the real app screen (see DEVELOPMENT.md) -------
+    # ✅ Confirmed ─────────────────────────────────────────────────────────────
     FossibotSensorDescription(
         key="battery_soc",
         tag=TAG_BATTERY_SOC,
@@ -68,6 +74,10 @@ SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
+        # Some models pack extra data in the high 16 bits of this tag (e.g.
+        # one device reported raw=196638 = 0x0003001E; low16=30°C is correct).
+        # Taking only the low 16 bits is safe for all observed models.
+        raw_transform=_low16,
     ),
     FossibotSensorDescription(
         key="remaining_minutes",
@@ -79,14 +89,10 @@ SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     FossibotSensorDescription(
-        key="ac_frequency",
-        tag=TAG_AC_FREQUENCY,
-        name="AC frequency",
-        translation_key="ac_frequency",
-        native_unit_of_measurement=UnitOfFrequency.HERTZ,
-        device_class=SensorDeviceClass.FREQUENCY,
-        state_class=SensorStateClass.MEASUREMENT,
-        scale=0.1,
+        key="charging",
+        tag=TAG_CHARGING_ACTIVE,
+        name="Charging",
+        translation_key="charging",
     ),
     FossibotSensorDescription(
         key="output_power",
@@ -97,49 +103,6 @@ SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    # --- Candidates (disabled by default) ---
-    FossibotSensorDescription(
-        key="output_power_mirror_raw",
-        tag=TAG_OUTPUT_POWER_MIRROR,
-        name="Output power mirror",
-        translation_key="output_power_mirror_raw",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        state_class=SensorStateClass.MEASUREMENT,
-        entity_registry_enabled_default=False,
-    ),
-    FossibotSensorDescription(
-        key="input_power_raw",
-        tag=TAG_INPUT_POWER_CANDIDATE,
-        name="Input power",
-        translation_key="input_power_raw",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        scale=1,
-        entity_registry_enabled_default=False,
-    ),
-    FossibotSensorDescription(
-        key="input_power_mirror_raw",
-        tag=TAG_INPUT_POWER_MIRROR_CANDIDATE,
-        name="Input power mirror",
-        translation_key="input_power_mirror_raw",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        scale=1,
-        entity_registry_enabled_default=False,
-    ),
-    # Confirmed: 0 when idle/fully charged, 1 when actively charging
-    FossibotSensorDescription(
-        key="charging_active",
-        tag=TAG_CHARGING_ACTIVE,
-        name="Charging",
-        translation_key="charging_active",
-        device_class=SensorDeviceClass.ENUM,
-        entity_registry_enabled_default=True,
-    ),
-    # Confirmed: raw * 0.1 = AC output voltage in volts.
-    # 2311-2312 → 231.1-231.2 V when AC output is ON, 0 when OFF.
     FossibotSensorDescription(
         key="ac_output_voltage",
         tag=TAG_AC_OUTPUT_VOLTAGE,
@@ -149,34 +112,59 @@ SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         scale=0.1,
-        entity_registry_enabled_default=True,
-    ),
-    # --- Unconfirmed (disabled by default) ---
-    FossibotSensorDescription(
-        key="input_voltage_or_current_raw",
-        tag=TAG_INPUT_VOLTAGE,
-        name="Input voltage or current",
-        translation_key="input_voltage_or_current_raw",
-        entity_registry_enabled_default=False,
     ),
     FossibotSensorDescription(
-        key="unknown_2c00_raw",
-        tag=TAG_UNKNOWN_2C00,
-        name="Unknown 0x2c00",
-        translation_key="unknown_2c00_raw",
-        entity_registry_enabled_default=False,
+        key="ac_frequency",
+        tag=TAG_AC_FREQUENCY,
+        name="AC frequency",
+        translation_key="ac_frequency",
+        native_unit_of_measurement=UnitOfFrequency.HERTZ,
+        device_class=SensorDeviceClass.FREQUENCY,
+        state_class=SensorStateClass.MEASUREMENT,
+        scale=0.1,
+    ),
+    # ✅ Confirmed (charge-related) ────────────────────────────────────────────
+    FossibotSensorDescription(
+        key="ac_grid_power",
+        tag=TAG_AC_GRID_POWER,
+        name="AC grid power",
+        translation_key="ac_grid_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     FossibotSensorDescription(
-        key="unknown_2d00_raw",
-        tag=TAG_UNKNOWN_2D00,
-        name="Unknown 0x2d00",
-        translation_key="unknown_2d00_raw",
+        key="total_input_power",
+        tag=TAG_TOTAL_INPUT_POWER,
+        name="Total input power",
+        translation_key="total_input_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    FossibotSensorDescription(
+        key="charge_power",
+        tag=TAG_CHARGE_POWER,
+        name="Charge power",
+        translation_key="charge_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    # ⚠️ Diagnostics — disabled by default ────────────────────────────────────
+    FossibotSensorDescription(
+        key="output_power_mirror_raw",
+        tag=TAG_OUTPUT_POWER_MIRROR,
+        name="Output power (mirror)",
+        translation_key="output_power_mirror_raw",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
         entity_registry_enabled_default=False,
     ),
     FossibotSensorDescription(
         key="battery_pack_raw",
         tag=TAG_BATTERY_PACK,
-        name="Battery pack",
+        name="Battery pack (raw)",
         translation_key="battery_pack_raw",
         entity_registry_enabled_default=False,
     ),
@@ -222,4 +210,6 @@ class FossibotSensor(CoordinatorEntity[FossibotCoordinator], SensorEntity):
         raw = self.coordinator.data.get(self.entity_description.tag)
         if raw is None:
             return None
+        if self.entity_description.raw_transform is not None:
+            raw = self.entity_description.raw_transform(raw)
         return round(raw * self.entity_description.scale, 2)
