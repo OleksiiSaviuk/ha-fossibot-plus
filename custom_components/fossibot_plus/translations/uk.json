@@ -2,17 +2,10 @@
   "config": {
     "step": {
       "user": {
+        "title": "Вхід у Fossibot+",
         "data": {
           "email": "Електронна пошта",
           "password": "Пароль"
-        },
-        "title": "Увійдіть у Fossibot+"
-      },
-      "model": {
-        "title": "Модель пристрою",
-        "description": "Оберіть модель для правильного діапазону потужності заряджання",
-        "data": {
-          "model": "Модель"
         }
       }
     },
@@ -39,8 +32,14 @@
       "charging": {
         "name": "Заряджання"
       },
-      "output_power": {
-        "name": "Вихідна потужність"
+      "ac_output_power": {
+        "name": "Вихідна потужність AC"
+      },
+      "usb_output_power": {
+        "name": "Вихідна потужність USB"
+      },
+      "total_output_power": {
+        "name": "Загальна вихідна потужність"
       },
       "ac_output_voltage": {
         "name": "Вихідна напруга AC"
@@ -56,12 +55,6 @@
       },
       "charge_power": {
         "name": "Потужність заряджання"
-      },
-      "output_power_mirror_raw": {
-        "name": "Вихідна потужність (дзеркало)"
-      },
-      "battery_pack_raw": {
-        "name": "Батарейний блок (сире)"
       }
     },
     "switch": {
@@ -101,26 +94,7 @@
     },
     "number": {
       "charge_power_limit": {
-        "name": "Потужність заряджання"
-      }
-    }
-  },
-  "options": {
-    "step": {
-      "init": {
-        "title": "Налаштування FOSSiBOT",
-        "data": {
-          "model": "Модель пристрою"
-        }
-      }
-    }
-  },
-  "selector": {
-    "model": {
-      "options": {
-        "f1800": "Fossibot F1800",
-        "f3000": "Fossibot F3000",
-        "custom": "Інша модель"
+        "name": "Потужність заряджання (ліміт)"
       }
     }
   }

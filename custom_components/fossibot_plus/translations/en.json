@@ -2,17 +2,10 @@
   "config": {
     "step": {
       "user": {
+        "title": "Sign in to Fossibot+",
         "data": {
           "email": "Email",
           "password": "Password"
-        },
-        "title": "Sign in to Fossibot+"
-      },
-      "model": {
-        "title": "Device model",
-        "description": "Select your model to set the correct charge power range",
-        "data": {
-          "model": "Model"
         }
       }
     },
@@ -39,8 +32,14 @@
       "charging": {
         "name": "Charging"
       },
-      "output_power": {
-        "name": "Output power"
+      "ac_output_power": {
+        "name": "AC output power"
+      },
+      "usb_output_power": {
+        "name": "USB output power"
+      },
+      "total_output_power": {
+        "name": "Total output power"
       },
       "ac_output_voltage": {
         "name": "AC output voltage"
@@ -56,12 +55,6 @@
       },
       "charge_power": {
         "name": "Charge power"
-      },
-      "output_power_mirror_raw": {
-        "name": "Output power (mirror)"
-      },
-      "battery_pack_raw": {
-        "name": "Battery pack (raw)"
       }
     },
     "switch": {
@@ -102,25 +95,6 @@
     "number": {
       "charge_power_limit": {
         "name": "Charge power limit"
-      }
-    }
-  },
-  "options": {
-    "step": {
-      "init": {
-        "title": "FOSSiBOT Settings",
-        "data": {
-          "model": "Device model"
-        }
-      }
-    }
-  },
-  "selector": {
-    "model": {
-      "options": {
-        "f1800": "Fossibot F1800",
-        "f3000": "Fossibot F3000",
-        "custom": "Other model"
       }
     }
   }

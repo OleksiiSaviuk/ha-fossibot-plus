@@ -1,4 +1,4 @@
-"""Config flow for FOSSiBOT."""
+"""Config flow for FOSSiBOT — single step: email + password only."""
 from __future__ import annotations
 
 import logging
@@ -9,16 +9,7 @@ from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import FossibotApiClient, FossibotAuthError, FossibotConnectionError
-from .const import (
-    CHARGE_POWER_LIMITS,
-    CONF_EMAIL,
-    CONF_MODEL,
-    CONF_PASSWORD,
-    DOMAIN,
-    MODEL_CUSTOM,
-    MODEL_F1800,
-    MODEL_F3000,
-)
+from .const import CONF_EMAIL, CONF_PASSWORD, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,22 +20,17 @@ STEP_USER_SCHEMA = vol.Schema(
     }
 )
 
-STEP_MODEL_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_MODEL, default=MODEL_F1800): vol.In(
-            [MODEL_F1800, MODEL_F3000, MODEL_CUSTOM]
-        ),
-    }
-)
-
 
 class FossibotConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a FOSSiBOT config flow."""
+    """One-step config flow: credentials only.
+
+    Model detection is automatic — derived from each device's serial number
+    prefix (F180... → F1800, F300... → F3000) so no user input is needed,
+    and accounts with multiple devices of different models work correctly
+    without any extra questions.
+    """
 
     VERSION = 1
-
-    def __init__(self) -> None:
-        self._data: dict[str, Any] = {}
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}
@@ -68,46 +54,10 @@ class FossibotConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 await self.async_set_unique_id(user_input[CONF_EMAIL].lower())
                 self._abort_if_unique_id_configured()
-                self._data = dict(user_input)
-                return await self.async_step_model()
+                return self.async_create_entry(
+                    title=user_input[CONF_EMAIL], data=user_input
+                )
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_SCHEMA, errors=errors
-        )
-
-    async def async_step_model(self, user_input: dict[str, Any] | None = None):
-        if user_input is not None:
-            self._data[CONF_MODEL] = user_input[CONF_MODEL]
-            return self.async_create_entry(
-                title=self._data[CONF_EMAIL], data=self._data
-            )
-        return self.async_show_form(
-            step_id="model", data_schema=STEP_MODEL_SCHEMA
-        )
-
-    @staticmethod
-    def async_get_options_flow(config_entry):
-        return FossibotOptionsFlow(config_entry)
-
-
-class FossibotOptionsFlow(config_entries.OptionsFlow):
-    """Allow changing the model after initial setup."""
-
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        self._config_entry = config_entry
-
-    async def async_step_init(self, user_input: dict[str, Any] | None = None):
-        current_model = self._config_entry.data.get(CONF_MODEL, MODEL_F1800)
-        if user_input is not None:
-            # Store in options; __init__.py reads options first, then data
-            return self.async_create_entry(title="", data=user_input)
-        return self.async_show_form(
-            step_id="init",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_MODEL, default=current_model): vol.In(
-                        [MODEL_F1800, MODEL_F3000, MODEL_CUSTOM]
-                    )
-                }
-            ),
         )

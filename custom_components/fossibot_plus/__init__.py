@@ -32,18 +32,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await api.async_login()
     devices = await api.async_get_devices()
 
+    # Per-device model map: options override initial data (options flow)
+    device_models: dict[str, str] = (
+        entry.options.get("device_models")
+        or entry.data.get("device_models", {})
+    )
+
     coordinators: dict[str, FossibotCoordinator] = {}
     try:
         for device in devices:
             sn_code = device["snCode"]
-            # Include the serial number in the device name so multiple stations
-            # (different models or several of the same model) don't all show up
-            # as an identical "Fossibot" in the HA device list.
             device_name = f"{device.get('deviceName', 'Fossibot')}-{sn_code}"
             coordinator = FossibotCoordinator(hass, api, sn_code, device_name)
-            # "state" from user_device/list is the device's online/offline flag
-            # (confirmed via a Charles capture: state:false while the station
-            # was powered off/offline) - seed it before the first poll below.
             coordinator.set_online(bool(device.get("state", True)))
             await coordinator.async_start()
             coordinators[sn_code] = coordinator

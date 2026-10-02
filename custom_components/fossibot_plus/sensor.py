@@ -28,16 +28,16 @@ from .const import (
     DOMAIN,
     TAG_AC_FREQUENCY,
     TAG_AC_GRID_POWER,
+    TAG_AC_OUTPUT_POWER,
     TAG_AC_OUTPUT_VOLTAGE,
-    TAG_BATTERY_PACK,
     TAG_BATTERY_SOC,
     TAG_CHARGE_POWER,
     TAG_CHARGING_ACTIVE,
-    TAG_OUTPUT_POWER,
-    TAG_OUTPUT_POWER_MIRROR,
     TAG_REMAINING_MINUTES,
     TAG_TEMPERATURE,
     TAG_TOTAL_INPUT_POWER,
+    TAG_TOTAL_OUTPUT_POWER,
+    TAG_USB_OUTPUT_POWER,
 )
 from .coordinator import FossibotCoordinator
 
@@ -94,11 +94,30 @@ SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
         name="Charging",
         translation_key="charging",
     ),
+    # ✅ Output power breakdown (confirmed: 2300 = 1400 + 2500 in every frame)
     FossibotSensorDescription(
-        key="output_power",
-        tag=TAG_OUTPUT_POWER,
-        name="Output power",
-        translation_key="output_power",
+        key="ac_output_power",
+        tag=TAG_AC_OUTPUT_POWER,
+        name="AC output power",
+        translation_key="ac_output_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    FossibotSensorDescription(
+        key="usb_output_power",
+        tag=TAG_USB_OUTPUT_POWER,
+        name="USB output power",
+        translation_key="usb_output_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    FossibotSensorDescription(
+        key="total_output_power",
+        tag=TAG_TOTAL_OUTPUT_POWER,
+        name="Total output power",
+        translation_key="total_output_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -123,7 +142,7 @@ SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         scale=0.1,
     ),
-    # ✅ Confirmed (charge-related) ────────────────────────────────────────────
+    # ✅ Input / charging power
     FossibotSensorDescription(
         key="ac_grid_power",
         tag=TAG_AC_GRID_POWER,
@@ -150,23 +169,6 @@ SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-    ),
-    # ⚠️ Diagnostics — disabled by default ────────────────────────────────────
-    FossibotSensorDescription(
-        key="output_power_mirror_raw",
-        tag=TAG_OUTPUT_POWER_MIRROR,
-        name="Output power (mirror)",
-        translation_key="output_power_mirror_raw",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        state_class=SensorStateClass.MEASUREMENT,
-        entity_registry_enabled_default=False,
-    ),
-    FossibotSensorDescription(
-        key="battery_pack_raw",
-        tag=TAG_BATTERY_PACK,
-        name="Battery pack (raw)",
-        translation_key="battery_pack_raw",
-        entity_registry_enabled_default=False,
     ),
 )
 
