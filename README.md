@@ -32,7 +32,7 @@ Multiple stations in one account are supported — each gets its own device with
 | **Charging** | — | Shows whether the station is actively charging (1) or not (0) |
 | **AC output power** | W | Power currently delivered through AC outlets |
 | **USB output power** | W | Power currently delivered through USB ports |
-| **Total output power** | W | Combined output across all ports (AC + USB) |
+| **Total output power** | W | Combined output across all ports (AC + DC + USB) |
 | **AC output voltage** | V | Voltage on the AC output (~230 V when active) |
 | **AC frequency** | Hz | AC output frequency (50.0 Hz) |
 | **AC grid power** | W | Power drawn from the mains socket while charging |
@@ -106,7 +106,7 @@ Multiple stations in one account are supported — each gets its own device with
 | **Заряджання** | — | Чи заряджається станція зараз (1) чи ні (0) |
 | **Вихідна потужність AC** | W | Потужність, яка зараз видається через розетки |
 | **Вихідна потужність USB** | W | Потужність, яка зараз видається через USB-порти |
-| **Загальна вихідна потужність** | W | Сумарне навантаження на всі виходи (AC + USB) |
+| **Загальна вихідна потужність** | W | Сумарне навантаження на всі виходи (AC + DC + USB) |
 | **Вихідна напруга AC** | V | Напруга на виході розеток (~230 В коли увімкнено) |
 | **Частота мережі** | Hz | Частота AC-виходу (50.0 Гц) |
 | **Потужність від мережі** | W | Скільки потужності береться з розетки під час зарядки |
