@@ -15,7 +15,7 @@ Monitor and control your FOSSiBOT power station directly from Home Assistant. Se
 
 | Model | Status |
 |-------|--------|
-| FOSSiBOT F1800 Pro | ✅ Tested |
+| FOSSiBOT F1800 | ✅ Tested |
 | Other Fossibot+ models | ⚠️ May work |
 
 Multiple stations in one account are supported — each gets its own device with its serial number in the name (e.g. `Fossibot-F180V012605B4936`).
@@ -89,7 +89,7 @@ Multiple stations in one account are supported — each gets its own device with
 
 | Модель | Статус |
 |--------|--------|
-| FOSSiBOT F1800 Pro | ✅ Протестовано |
+| FOSSiBOT F1800 | ✅ Протестовано |
 | Інші моделі Fossibot+ | ⚠️ Можливо сумісні |
 
 Підтримується декілька станцій в одному обліковому записі — кожна отримує окремий пристрій із серійним номером у назві (наприклад `Fossibot-F180V012605B4936`).
