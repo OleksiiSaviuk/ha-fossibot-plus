@@ -1,175 +1,161 @@
 <div align="center">
 
-# FOSSiBOT Power Station
-### Home Assistant Custom Integration
+# 🔋 FOSSiBOT Power Station for Home Assistant
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz)
 [![HA Version](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue.svg)](https://www.home-assistant.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Повноцінна інтеграція зарядних станцій FOSSiBOT у Home Assistant через хмарний API —
-телеметрія у реальному часі та повне керування виходами і налаштуваннями.
-
 </div>
 
 ---
+Monitor and control your FOSSiBOT power station directly from Home Assistant. See battery level, power consumption, charging status in real time — and control outputs without touching the app.
 
-## 🔌 Підтримувані пристрої
+### Supported devices
+
+| Model | Status |
+|-------|--------|
+| FOSSiBOT F1800 | ✅ Tested |
+| Other Fossibot+ models | ⚠️ May work |
+
+Multiple stations in one account are supported — each gets its own device with its serial number in the name (e.g. `Fossibot-F180V012605B4936`).
+
+---
+
+### 📊 Sensors
+
+| Name | Unit | Description |
+|------|------|-------------|
+| **Battery** | % | Current battery charge level |
+| **Temperature** | °C | Internal station temperature |
+| **Time remaining** | min | Time until fully charged or discharged |
+| **Charging** | — | Shows whether the station is actively charging (1) or not (0) |
+| **AC output power** | W | Power currently delivered through AC outlets |
+| **USB output power** | W | Power currently delivered through USB ports |
+| **Total output power** | W | Combined output across all ports (AC + DC + USB) |
+| **AC output voltage** | V | Voltage on the AC output (~230 V when active) |
+| **AC frequency** | Hz | AC output frequency (50.0 Hz) |
+| **AC grid power** | W | Power drawn from the mains socket while charging |
+| **Total input power** | W | Total charging input: mains + solar panel combined |
+| **Charge power** | W | Read-back of the current charge power limit setting |
+
+---
+
+### 🎛️ Controls
+
+#### Switches
+| Name | Description |
+|------|-------------|
+| **AC output** | Turn AC outlets on or off |
+| **DC output** | Turn 12V DC port on or off |
+| **USB output** | Turn USB ports on or off |
+| **Sound** | Enable or disable beep notifications |
+| **Output memory** | Remember output states after a power cut |
+
+#### Dropdowns
+| Name | Options | Description |
+|------|---------|-------------|
+| **LED mode** | Off / Steady / SOS / Strobe | Control the built-in flashlight |
+| **Charge mode** | UPS / ECO | Switch between bypass (UPS) and efficient (ECO) charging mode |
+
+#### Number
+| Name | Range | Description |
+|------|-------|-------------|
+| **Charge power limit** | 100–1200 W (F1800) / 100–2000 W (F3000) | Set how much power the station draws while charging. Detected automatically from the serial number. |
+
+---
+
+### 🚀 Installation
+
+**Via HACS (recommended)**
+1. HACS → ⋮ → **Custom repositories** → add `https://github.com/zelin-sky/ha-fossibot-plus` → category: **Integration**
+2. Find **FOSSiBOT Power Station** → **Download**
+3. Restart Home Assistant
+4. **Settings → Devices & Services → Add Integration → FOSSiBOT Power Station**
+5. Enter the email and password from the **Fossibot+** app
+
+**Manual**
+1. Copy `custom_components/fossibot_plus/` to `<config>/custom_components/`
+2. Restart Home Assistant and add the integration as above
+
+---
+
+---
+
+
+Моніторинг та керування зарядною станцією FOSSiBOT прямо з Home Assistant. Рівень заряду, споживання, статус зарядки в реальному часі — і повне керування виходами без відкриття застосунку.
+
+### Підтримувані пристрої
 
 | Модель | Статус |
 |--------|--------|
-| FOSSiBOT F1800 Pro | ✅ Протестовано |
+| FOSSiBOT F1800 | ✅ Протестовано |
 | Інші моделі Fossibot+ | ⚠️ Можливо сумісні |
 
-> Підтримує декілька станцій в одному обліковому записі — кожна отримає окремий пристрій із серійним номером у назві (наприклад `Fossibot-F180V012605B4936`).
+Підтримується декілька станцій в одному обліковому записі — кожна отримує окремий пристрій із серійним номером у назві (наприклад `Fossibot-F180V012605B4936`).
 
 ---
-
-## ✨ Сутності
 
 ### 📊 Сенсори
 
-| Назва | Одиниці | Опис |
-|-------|---------|------|
-| **Battery** | % | Рівень заряду акумулятора |
-| **Temperature** | °C | Температура станції |
-| **Time remaining** | хв | Час до повного заряду або розряду |
-| **Charging** | — | Активне заряджання (1=так, 0=ні) |
-| **Output power** | W | Поточна вихідна потужність |
-| **AC output voltage** | V | Напруга на виході AC (~230 В) |
-| **AC frequency** | Hz | Частота вихідного змінного струму |
-| **AC grid power** | W | Потужність від мережі змінного струму |
-| **Total input power** | W | Сумарна вхідна потужність (мережа AC + сонце) |
-| **Charge power** | W | Загальна потужність заряджання |
-
-### 🎛️ Перемикачі
-
-| Назва | Опис |
-|-------|------|
-| **AC output** | Вмикання/вимикання розеток змінного струму |
-| **DC output** | Вмикання/вимикання виходу постійного струму 12V |
-| **USB output** | Вмикання/вимикання USB-портів |
-| **Sound** | Вмикання/вимикання звукових сповіщень |
-| **Output memory** | Пам'ять стану виходів після відновлення живлення |
-
-### 🔽 Дропдауни (Select)
-
-| Назва | Опції | Опис |
-|-------|-------|------|
-| **LED mode** | Off / Steady / SOS / Strobe | Режим вбудованого світлодіода |
-| **Charge mode** | UPS / ECO | Режим зарядки від мережі |
+| Назва | Одиниці | Що показує |
+|-------|---------|-----------|
+| **Заряд батареї** | % | Поточний рівень заряду акумулятора |
+| **Температура** | °C | Внутрішня температура станції |
+| **Залишок часу** | хв | Час до повного заряду або до розряду |
+| **Заряджання** | — | Чи заряджається станція зараз (1) чи ні (0) |
+| **Вихідна потужність AC** | W | Потужність, яка зараз видається через розетки |
+| **Вихідна потужність USB** | W | Потужність, яка зараз видається через USB-порти |
+| **Загальна вихідна потужність** | W | Сумарне навантаження на всі виходи (AC + DC + USB) |
+| **Вихідна напруга AC** | V | Напруга на виході розеток (~230 В коли увімкнено) |
+| **Частота мережі** | Hz | Частота AC-виходу (50.0 Гц) |
+| **Потужність від мережі** | W | Скільки потужності береться з розетки під час зарядки |
+| **Сумарна вхідна потужність** | W | Загальна вхідна потужність: мережа + сонячна панель |
+| **Потужність заряджання** | W | Поточне встановлене обмеження потужності зарядки |
 
 ---
 
-## 🚀 Встановлення
+### 🎛️ Керування
 
-### Через HACS (рекомендовано)
+#### Перемикачі
+| Назва | Що робить |
+|-------|-----------|
+| **Змінний струм (AC)** | Вмикає/вимикає розетки змінного струму |
+| **Постійний струм (DC)** | Вмикає/вимикає DC-вихід 12V |
+| **USB** | Вмикає/вимикає USB-порти |
+| **Звук** | Вмикає/вимикає звукові сигнали станції |
+| **Пам'ять виходів** | Запам'ятовує стан виходів після відновлення живлення |
 
-1. Відкрийте **HACS** → натисніть ⋮ → **Custom repositories**
-2. Додайте `https://github.com/zelin-sky/ha-fossibot-plus` → категорія **Integration**
-3. Знайдіть **FOSSiBOT Power Station** → натисніть **Download**
-4. Перезапустіть Home Assistant
+#### Дропдауни
+| Назва | Варіанти | Опис |
+|-------|----------|------|
+| **Режим LED** | Вимкнено / Постійний / SOS / Стробоскоп | Керування вбудованим ліхтарем |
+| **Режим зарядки** | UPS / ECO | UPS — миттєве перемикання без зупинки (для чутливої техніки); ECO — ефективне заряджання з відключенням по-завершенні |
 
-### Вручну
+#### Числовий регулятор
+| Назва | Діапазон | Опис |
+|-------|----------|------|
+| **Потужність заряджання (ліміт)** | 100–1200 W (F1800) / 100–2000 W (F3000) | Встановлює максимальну потужність, яку станція споживає під час зарядки. Крок — 100 W. Діапазон визначається автоматично з серійного номера. |
 
+---
+
+### 🚀 Встановлення
+
+**Через HACS (рекомендовано)**
+1. HACS → ⋮ → **Custom repositories** → додайте `https://github.com/zelin-sky/ha-fossibot-plus` → категорія: **Integration**
+2. Знайдіть **FOSSiBOT Power Station** → **Download**
+3. Перезапустіть Home Assistant
+4. **Налаштування → Пристрої та служби → Додати інтеграцію → FOSSiBOT Power Station**
+5. Введіть email та пароль від застосунку **Fossibot+**
+
+**Вручну**
 1. Скопіюйте `custom_components/fossibot_plus/` до `<config>/custom_components/`
-2. Перезапустіть Home Assistant
-
-### Налаштування
-
-1. **Налаштування** → **Пристрої та служби** → **Додати інтеграцію** → **FOSSiBOT Power Station**
-2. Введіть email та пароль від застосунку **Fossibot+**
-
----
-
-## 📡 Технічні деталі
-
-### Архітектура
-
-```
-Fossibot+ Cloud (app.fossibot.hk)
-        │
-        ├── POST /prod-api/app/user/login           →  JWT токен
-        ├── GET  /prod-api/app/user_device/list     →  Список пристроїв + стан online
-        ├── GET  /prod-api/app/ctrl/route?cmd=...   →  Команди керування
-        └── WS   ws://app.fossibot.hk/ws            →  Телеметрія (~1 кадр/сек)
-```
-
-### Протокол телеметрії (TLV)
-
-Сервер надсилає бінарні кадри через WebSocket приблизно раз на секунду.
-
-```
-[6 байт header][N × (2 байти тег + 4 байти значення LE)][2 байти CRC16/MODBUS]
-```
-
-### Підтверджені теги
-
-| Тег | Назва | Scale | Опис |
-|-----|-------|-------|------|
-| `0100` | Battery | ×1 | SOC (%) |
-| `0200` | Temperature | low16, ×1 | Температура (°C)¹ |
-| `0300` | Time remaining | ×1 | Залишок часу (хв) |
-| `0400` | Charging | — | Активне заряджання (0/1) |
-| `1300` | AC grid power | ×1 | Вхідна потужність від мережі (W) |
-| `1400` | Output power | ×1 | Вихідна потужність (W) |
-| `1500` | AC output voltage | ×0.1 | Вихідна напруга AC (V) |
-| `1600` | AC frequency | ×0.1 | Частота AC (Hz) |
-| `2200` | Total input power | ×1 | Сумарна вхідна потужність (W) |
-| `2600` | LED mode | — | 0=вимк, 1=постійний, 2=SOS, 3=строб |
-| `2700` | AC output | — | AC вихід (0/1) |
-| `2800` | DC output | — | DC вихід (0/1) |
-| `2900` | USB output | — | USB вихід (0/1) |
-| `2a00` | Charge power | ×1 | Потужність заряджання (W) |
-| `2b00` | Output memory | — | Пам'ять виходів (0/1) |
-| `2c00` | Screen timeout | — | 0=завжди, 1=30с, 2=1хв, 3=5хв, 4=10хв, 5=30хв |
-| `2d00` | Power-off timer | — | 0=ніколи, 1=5хв, 2=10хв, 3=1г, 4=8г |
-| `2e00` | Charge mode | — | 0=UPS, 1=ECO |
-| `3300` | Sound | — | Звук (0/1) |
-
-> ¹ Деякі моделі пакують метадані у старші 16 біт тегу `0200`. Інтеграція автоматично бере лише молодші 16 біт, що коректно для всіх відомих моделей.
-
-### Формат команди керування
-
-```
-cmd = "0e000c000800" + tag(2B LE) + value(4B LE) + CRC16/MODBUS(tag+value, BE)
-GET /prod-api/app/ctrl/route?snCode=<SN>&cmd=<cmd>
-```
-
-CRC підтверджено для всіх перехоплених команд (AC/DC/USB/LED/Sound/Memory/Mode).
-
-### Надійність
-
-| Механізм | Деталі |
-|----------|--------|
-| **Heartbeat** | `{"type":"hear","msg":"email"}` кожні 5 с |
-| **Watchdog** | Якщо WS мовчить >30 с — перепідключення |
-| **Anti-dup guard** | Ретрай через 6 с при помилці `重复提交` |
-| **Token refresh** | Автоматичний перелогін при `401` |
-| **Online polling** | REST-перевірка стану кожну хвилину |
-
----
-
-## 🐛 Debug logging
-
-```yaml
-logger:
-  default: warning
-  logs:
-    custom_components.fossibot_plus: debug
-```
-
----
-
-## 🤝 Внесок
-
-Особливо корисним буде:
-- Charles-захоплення нових команд
-- Логи при різних станах для підтвердження невідомих тегів
-- Тестування на інших моделях FOSSiBOT
+2. Перезапустіть Home Assistant і додайте інтеграцію як описано вище
 
 ---
 
 <div align="center">
+
 Зроблено з ❤️. Зроблено в Україні.
+
 </div>
