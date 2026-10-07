@@ -16,6 +16,7 @@ Monitor and control your FOSSiBOT power station directly from Home Assistant. Se
 | Model | Status |
 |-------|--------|
 | FOSSiBOT F1800 | ✅ Tested |
+| FOSSiBOT F3000 | ✅ Tested |
 | Other Fossibot+ models | ⚠️ May work |
 
 Multiple stations in one account are supported — each gets its own device with its serial number in the name (e.g. `Fossibot-F180V012605B4936`).
@@ -98,7 +99,7 @@ Multiple stations in one account are supported — each gets its own device with
 
 ### 🙏 Credits
 
-The register map for battery, DC input/output sensors and extra settings comes from [Enduranc3/fossibot-control](https://github.com/Enduranc3/fossibot-control) (decoded from the official app). These were tested on the F1800 only — if a value looks wrong on your model, please open an issue.
+The register map for battery, DC input/output sensors and extra settings comes from [Enduranc3/fossibot-control](https://github.com/Enduranc3/fossibot-control) (decoded from the official app). These were tested on the F3000 only — if a value looks wrong on your model, please open an issue.
 
 ---
 
@@ -112,6 +113,7 @@ The register map for battery, DC input/output sensors and extra settings comes f
 | Модель | Статус |
 |--------|--------|
 | FOSSiBOT F1800 | ✅ Протестовано |
+| FOSSiBOT F3000 | ✅ Протестовано |
 | Інші моделі Fossibot+ | ⚠️ Можливо сумісні |
 
 Підтримується декілька станцій в одному обліковому записі — кожна отримує окремий пристрій із серійним номером у назві (наприклад `Fossibot-F180V012605B4936`).
@@ -194,7 +196,7 @@ The register map for battery, DC input/output sensors and extra settings comes f
 
 ### 🙏 Подяки
 
-Карту регістрів для сенсорів батареї, DC-входу/виходу та додаткових налаштувань взято з [Enduranc3/fossibot-control](https://github.com/Enduranc3/fossibot-control) (розшифровано з офіційного застосунку). Перевірено лише на F1800 — якщо на вашій моделі якесь значення виглядає неправильно, створіть issue.
+Карту регістрів для сенсорів батареї, DC-входу/виходу та додаткових налаштувань взято з [Enduranc3/fossibot-control](https://github.com/Enduranc3/fossibot-control) (розшифровано з офіційного застосунку). Перевірено лише на F3000 — якщо на вашій моделі якесь значення виглядає неправильно, створіть issue.
 
 ---
 
