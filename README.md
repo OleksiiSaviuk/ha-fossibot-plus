@@ -46,7 +46,7 @@ Multiple stations in one account are supported — each gets its own device with
 | **DC input energy** | kWh | Energy received through the DC input |
 | **DC output power** | W | Power delivered through the 12V DC port |
 | **Inverter temperature** | °C | Inverter temperature |
-| *Diagnostic* | — | Battery min temperature, BMS MOS / MOS temperature, BMS / PCS / DC input fault codes, firmware |
+| *Diagnostic* | — | Battery min temperature, BMS MOS / MOS temperature, BMS / PCS / DC input fault codes (raw value, `0` = no fault), firmware (e.g. `01-02-03-04`) |
 
 ---
 
@@ -77,6 +77,8 @@ Multiple stations in one account are supported — each gets its own device with
 | **Discharge limit** | 0–20 % | Stop discharging at this level |
 | **Screen brightness** | 0–100 % | Display brightness |
 
+> Standby dropdowns and screen brightness are in the device's **Configuration** section; fault codes, firmware and internal temperatures are in **Diagnostic**.
+
 ---
 
 ### 🚀 Installation
@@ -91,6 +93,12 @@ Multiple stations in one account are supported — each gets its own device with
 **Manual**
 1. Copy `custom_components/fossibot_plus/` to `<config>/custom_components/`
 2. Restart Home Assistant and add the integration as above
+
+---
+
+### 🙏 Credits
+
+The register map for battery, DC input/output sensors and extra settings comes from [Enduranc3/fossibot-control](https://github.com/Enduranc3/fossibot-control) (decoded from the official app). These were tested on the F1800 only — if a value looks wrong on your model, please open an issue.
 
 ---
 
@@ -134,7 +142,7 @@ Multiple stations in one account are supported — each gets its own device with
 | **Енергія DC-входу** | kWh | Скільки енергії отримано через DC-вхід |
 | **Потужність DC-виходу** | W | Потужність на виході DC 12V |
 | **Температура інвертора** | °C | Температура інвертора |
-| *Діагностика* | — | Мін. температура батареї, температура MOS BMS / MOS, коди помилок BMS / PCS / DC-входу, прошивка |
+| *Діагностика* | — | Мін. температура батареї, температура MOS BMS / MOS, коди помилок BMS / PCS / DC-входу (сире значення, `0` — без помилок), прошивка (напр. `01-02-03-04`) |
 
 ---
 
@@ -165,6 +173,8 @@ Multiple stations in one account are supported — each gets its own device with
 | **Ліміт розряду** | 0–20 % | Зупинити розряд на цьому рівні |
 | **Яскравість екрана** | 0–100 % | Яскравість дисплея |
 
+> Автовимкнення виходів і яскравість екрана — у розділі **Конфігурація** пристрою; коди помилок, прошивка та внутрішні температури — у розділі **Діагностика**.
+
 ---
 
 ### 🚀 Встановлення
@@ -179,6 +189,12 @@ Multiple stations in one account are supported — each gets its own device with
 **Вручну**
 1. Скопіюйте `custom_components/fossibot_plus/` до `<config>/custom_components/`
 2. Перезапустіть Home Assistant і додайте інтеграцію як описано вище
+
+---
+
+### 🙏 Подяки
+
+Карту регістрів для сенсорів батареї, DC-входу/виходу та додаткових налаштувань взято з [Enduranc3/fossibot-control](https://github.com/Enduranc3/fossibot-control) (розшифровано з офіційного застосунку). Перевірено лише на F1800 — якщо на вашій моделі якесь значення виглядає неправильно, створіть issue.
 
 ---
 

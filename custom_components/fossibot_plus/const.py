@@ -62,7 +62,7 @@ TAG_SOUND              = "3300"  # Sound: 0=off, 1=on — confirmed by ctrl cmd
 TAG_TOTAL_INPUT_POWER  = "2200"  # Total input power = grid AC + solar PV (W, scale 1:1)
 TAG_CHARGE_POWER       = "2a00"  # AC charge power limit (W) — set by number entity
 TAG_DC_CHARGE_CURRENT  = "3500"  # DC (PV/car/ext.) charge current, A (u8)
-                                  # 1–8 A default, up to 15 A; F300 up to 25 A ("extended")
+                                  # 1–8 A default, up to 15 A; F3000 up to 25 A ("extended")
 
 # ✅ CONFIRMED from log analysis (frames with USB active):
 #   2300 = 1400 + 2500 in every observed frame — 100% match across 6 samples.
