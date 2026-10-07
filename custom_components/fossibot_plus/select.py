@@ -15,7 +15,16 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api import FossibotApiClient
-from .const import DOMAIN, TAG_CHARGE_MODE, TAG_LED_MODE
+from homeassistant.const import EntityCategory
+
+from .const import (
+    DOMAIN,
+    TAG_AC_STANDBY,
+    TAG_CHARGE_MODE,
+    TAG_DC_STANDBY,
+    TAG_LED_MODE,
+    TAG_USB_STANDBY,
+)
 from .coordinator import FossibotCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -30,6 +39,16 @@ CHARGE_OPTIONS = ["ups", "eco"]
 CHARGE_TO_VALUE = {"ups": 0, "eco": 1}
 VALUE_TO_CHARGE = {v: k for k, v in CHARGE_TO_VALUE.items()}
 
+# --- Output standby (auto-off without load) --------------------------------
+STANDBY_OPTIONS = ["never", "30m", "1h", "4h", "8h", "12h", "24h"]
+STANDBY_TO_VALUE = {k: i for i, k in enumerate(STANDBY_OPTIONS)}
+VALUE_TO_STANDBY = {v: k for k, v in STANDBY_TO_VALUE.items()}
+STANDBY_TYPES = (
+    ("dc_standby", TAG_DC_STANDBY, "DC standby"),
+    ("usb_standby", TAG_USB_STANDBY, "USB standby"),
+    ("ac_standby", TAG_AC_STANDBY, "AC standby"),
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
@@ -40,6 +59,8 @@ async def async_setup_entry(
     for coordinator in data["coordinators"].values():
         entities.append(FossibotLedSelect(coordinator, api))
         entities.append(FossibotChargeModeSelect(coordinator, api))
+        for key, tag, name in STANDBY_TYPES:
+            entities.append(FossibotStandbySelect(coordinator, api, key, tag, name))
     async_add_entities(entities)
 
 
@@ -105,3 +126,20 @@ class FossibotChargeModeSelect(_FossibotSelect):
             key="charge_mode", translation_key="charge_mode", name="Charge mode"
         )
         self._attr_unique_id = f"{coordinator.sn_code}_charge_mode"
+
+
+class FossibotStandbySelect(_FossibotSelect):
+    _option_to_value = STANDBY_TO_VALUE
+    _value_to_option = VALUE_TO_STANDBY
+    _attr_options = STANDBY_OPTIONS
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_icon = "mdi:timer-off-outline"
+
+    def __init__(self, coordinator: FossibotCoordinator, api: FossibotApiClient,
+                 key: str, tag: str, name: str) -> None:
+        super().__init__(coordinator, api)
+        self._tag = tag
+        self.entity_description = SelectEntityDescription(
+            key=key, translation_key=key, name=name
+        )
+        self._attr_unique_id = f"{coordinator.sn_code}_{key}"
