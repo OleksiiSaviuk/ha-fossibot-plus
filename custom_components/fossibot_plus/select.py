@@ -23,6 +23,8 @@ from .const import (
     TAG_CHARGE_MODE,
     TAG_DC_STANDBY,
     TAG_LED_MODE,
+    TAG_POWER_OFF_TIMER,
+    TAG_SCREEN_TIMEOUT,
     TAG_USB_STANDBY,
 )
 from .coordinator import FossibotCoordinator
@@ -43,6 +45,11 @@ VALUE_TO_CHARGE = {v: k for k, v in CHARGE_TO_VALUE.items()}
 STANDBY_OPTIONS = ["never", "30m", "1h", "4h", "8h", "12h", "24h"]
 STANDBY_TO_VALUE = {k: i for i, k in enumerate(STANDBY_OPTIONS)}
 VALUE_TO_STANDBY = {v: k for k, v in STANDBY_TO_VALUE.items()}
+# Screen timeout / power-off timer — mapping confirmed against the app on F3000
+# (2c00=3 shown as "5 min", 2d00=2 shown as "10 min").
+SCREEN_OPTIONS = ["always_on", "30s", "1m", "5m", "10m", "30m"]
+POWEROFF_OPTIONS = ["never", "5m", "10m", "1h", "8h"]
+
 STANDBY_TYPES = (
     ("dc_standby", TAG_DC_STANDBY, "DC standby"),
     ("usb_standby", TAG_USB_STANDBY, "USB standby"),
@@ -61,6 +68,12 @@ async def async_setup_entry(
         entities.append(FossibotChargeModeSelect(coordinator, api))
         for key, tag, name in STANDBY_TYPES:
             entities.append(FossibotStandbySelect(coordinator, api, key, tag, name))
+        entities.append(FossibotEnumSelect(
+            coordinator, api, "screen_timeout", TAG_SCREEN_TIMEOUT,
+            "Screen timeout", SCREEN_OPTIONS, "mdi:monitor-off"))
+        entities.append(FossibotEnumSelect(
+            coordinator, api, "power_off_timer", TAG_POWER_OFF_TIMER,
+            "Power-off timer", POWEROFF_OPTIONS, "mdi:power-sleep"))
     async_add_entities(entities)
 
 
@@ -139,6 +152,25 @@ class FossibotStandbySelect(_FossibotSelect):
                  key: str, tag: str, name: str) -> None:
         super().__init__(coordinator, api)
         self._tag = tag
+        self.entity_description = SelectEntityDescription(
+            key=key, translation_key=key, name=name
+        )
+        self._attr_unique_id = f"{coordinator.sn_code}_{key}"
+
+
+class FossibotEnumSelect(_FossibotSelect):
+    """Generic config select: option index == raw register value."""
+
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(self, coordinator: FossibotCoordinator, api: FossibotApiClient,
+                 key: str, tag: str, name: str, options: list[str], icon: str) -> None:
+        super().__init__(coordinator, api)
+        self._tag = tag
+        self._attr_options = options
+        self._option_to_value = {o: i for i, o in enumerate(options)}
+        self._value_to_option = {i: o for i, o in enumerate(options)}
+        self._attr_icon = icon
         self.entity_description = SelectEntityDescription(
             key=key, translation_key=key, name=name
         )

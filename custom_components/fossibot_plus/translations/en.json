@@ -171,6 +171,27 @@
           "12h": "12 h",
           "24h": "24 h"
         }
+      },
+      "screen_timeout": {
+        "name": "Screen timeout",
+        "state": {
+          "always_on": "Always on",
+          "30s": "30 s",
+          "1m": "1 min",
+          "5m": "5 min",
+          "10m": "10 min",
+          "30m": "30 min"
+        }
+      },
+      "power_off_timer": {
+        "name": "Power-off timer",
+        "state": {
+          "never": "Never",
+          "5m": "5 min",
+          "10m": "10 min",
+          "1h": "1 h",
+          "8h": "8 h"
+        }
       }
     },
     "number": {

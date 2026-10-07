@@ -68,6 +68,8 @@ Multiple stations in one account are supported — each gets its own device with
 | **LED mode** | Off / Steady / SOS / Strobe | Control the built-in flashlight |
 | **Charge mode** | UPS / ECO | Switch between bypass (UPS) and efficient (ECO) charging mode |
 | **DC / USB / AC standby** | Never / 30 min / 1 / 4 / 8 / 12 / 24 h | Auto-off of the output when there is no load |
+| **Screen timeout** | Always on / 30 s / 1 / 5 / 10 / 30 min | Display auto-off |
+| **Power-off timer** | Never / 5 / 10 min / 1 / 8 h | Station auto power-off |
 
 #### Number
 | Name | Range | Description |
@@ -165,6 +167,8 @@ The register map for battery, DC input/output sensors and extra settings comes f
 | **Режим LED** | Вимкнено / Постійний / SOS / Стробоскоп | Керування вбудованим ліхтарем |
 | **Режим зарядки** | UPS / ECO | UPS — миттєве перемикання без зупинки (для чутливої техніки); ECO — ефективне заряджання з відключенням по-завершенні |
 | **Автовимкнення DC / USB / AC** | Ніколи / 30 хв / 1 / 4 / 8 / 12 / 24 год | Вимкнення виходу, якщо немає навантаження |
+| **Час вимкнення екрана** | Завжди / 30 с / 1 / 5 / 10 / 30 хв | Автовимкнення дисплея |
+| **Час вимкнення станції** | Ніколи / 5 / 10 хв / 1 / 8 год | Автовимкнення станції |
 
 #### Числовий регулятор
 | Назва | Діапазон | Опис |
