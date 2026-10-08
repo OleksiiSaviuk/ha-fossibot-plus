@@ -41,12 +41,9 @@ CHARGE_OPTIONS = ["ups", "eco"]
 CHARGE_TO_VALUE = {"ups": 0, "eco": 1}
 VALUE_TO_CHARGE = {v: k for k, v in CHARGE_TO_VALUE.items()}
 
-# --- Output standby (auto-off without load) --------------------------------
 STANDBY_OPTIONS = ["never", "30m", "1h", "4h", "8h", "12h", "24h"]
 STANDBY_TO_VALUE = {k: i for i, k in enumerate(STANDBY_OPTIONS)}
 VALUE_TO_STANDBY = {v: k for k, v in STANDBY_TO_VALUE.items()}
-# Screen timeout / power-off timer — mapping confirmed against the app on F3000
-# (2c00=3 shown as "5 min", 2d00=2 shown as "10 min").
 SCREEN_OPTIONS = ["always_on", "30s", "1m", "5m", "10m", "30m"]
 POWEROFF_OPTIONS = ["never", "5m", "10m", "1h", "8h"]
 
