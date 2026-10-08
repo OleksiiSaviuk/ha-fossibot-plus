@@ -55,6 +55,8 @@ from .const import (
     TAG_PV_FAULT,
     TAG_DC_OUTPUT_POWER,
     TAG_FIRMWARE,
+    TAG_BMS_VERSION,
+    TAG_PCS_VERSION,
     TAG_SOLAR_ENERGY,
 )
 from .coordinator import FossibotCoordinator
@@ -212,6 +214,9 @@ SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
     ),
 
     # ➕ Extra registers (fossibot-control register map) ─────────────────────
+    # Battery voltage/current, temperatures other than 0200, DC input
+    # voltage/current and fault codes are not sent by F3000 (see const.py)
+    # and stay "unknown" there; kept to check other models.
     FossibotSensorDescription(
         key="pack_voltage", tag=TAG_PACK_VOLTAGE, name="Battery voltage",
         translation_key="pack_voltage", scale=0.1,
@@ -296,6 +301,16 @@ SENSOR_TYPES: tuple[FossibotSensorDescription, ...] = (
     FossibotSensorDescription(
         key="firmware", tag=TAG_FIRMWARE, name="Firmware",
         translation_key="firmware", formatter=_version,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    FossibotSensorDescription(
+        key="bms_version", tag=TAG_BMS_VERSION, name="BMS version",
+        translation_key="bms_version", formatter=_version,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    FossibotSensorDescription(
+        key="pcs_version", tag=TAG_PCS_VERSION, name="PCS version",
+        translation_key="pcs_version", formatter=_version,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )

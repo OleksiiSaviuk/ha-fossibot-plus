@@ -100,6 +100,12 @@
       },
       "firmware": {
         "name": "Прошивка"
+      },
+      "bms_version": {
+        "name": "Версія BMS"
+      },
+      "pcs_version": {
+        "name": "Версія PCS"
       }
     },
     "switch": {

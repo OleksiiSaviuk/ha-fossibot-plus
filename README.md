@@ -47,7 +47,9 @@ Multiple stations in one account are supported — each gets its own device with
 | **DC input energy** | kWh | Energy received through the DC input |
 | **DC output power** | W | Power delivered through the 12V DC port |
 | **Inverter temperature** | °C | Inverter temperature |
-| *Diagnostic* | — | Battery min temperature, BMS MOS / MOS temperature, BMS / PCS / DC input fault codes (raw value, `0` = no fault), firmware (e.g. `01-02-03-04`) |
+| *Diagnostic* | — | Battery min temperature, BMS MOS / MOS temperature, BMS / PCS / DC input fault codes (raw value, `0` = no fault), firmware, BMS and PCS versions (e.g. `01-02-03-04`) |
+
+> F3000 does not send battery voltage/current, DC input voltage/current, inverter / MOS temperatures and fault codes to the cloud, so these show *Unknown* there. They are kept to check other models — please report if they work on yours.
 
 ---
 
@@ -146,7 +148,9 @@ The register map for battery, DC input/output sensors and extra settings comes f
 | **Енергія DC-входу** | kWh | Скільки енергії отримано через DC-вхід |
 | **Потужність DC-виходу** | W | Потужність на виході DC 12V |
 | **Температура інвертора** | °C | Температура інвертора |
-| *Діагностика* | — | Мін. температура батареї, температура MOS BMS / MOS, коди помилок BMS / PCS / DC-входу (сире значення, `0` — без помилок), прошивка (напр. `01-02-03-04`) |
+| *Діагностика* | — | Мін. температура батареї, температура MOS BMS / MOS, коди помилок BMS / PCS / DC-входу (сире значення, `0` — без помилок), прошивка, версії BMS і PCS (напр. `01-02-03-04`) |
+
+> F3000 не надсилає в хмару напругу/струм батареї, напругу/струм DC-входу, температури інвертора / MOS і коди помилок, тому там вони показують *Невідомо*. Їх залишено для перевірки на інших моделях — повідомте, якщо на вашій вони працюють.
 
 ---
 

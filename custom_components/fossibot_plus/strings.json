@@ -100,6 +100,12 @@
       },
       "firmware": {
         "name": "Firmware"
+      },
+      "bms_version": {
+        "name": "BMS version"
+      },
+      "pcs_version": {
+        "name": "PCS version"
       }
     },
     "switch": {
